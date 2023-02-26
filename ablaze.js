@@ -2759,7 +2759,7 @@ class Furnance {
     return this[`seedShader`];
   }
   [`drawSeedTexture`](o) {
-    gl[`clearColor`](0, 1, 0, 1);
+    gl[`clearColor`](0, 0, 0, 1);
     gl[`clear`](gl[`COLOR_BUFFER_BIT`]);
     opengl[`uPushMatrix`]();
     opengl[`uTranslatef`](0.5, 0.5, 0);

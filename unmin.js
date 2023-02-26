@@ -22,8 +22,8 @@ const fs = require('fs/promises');
       .replaceAll(/0[xX][0-9a-fA-F]+/g, (match) => {
         return match - 0x0;
       })
-      .replaceAll(/!\[\]/g, "false")
       .replaceAll(/!!\[\]/g, "true")
+      .replaceAll(/!\[\]/g, "false")
     await fs.writeFile('./ablaze.raw.js', newScript);
   } catch (err) {
     console.log(err);
