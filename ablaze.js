@@ -134,7 +134,7 @@ e[`getSpectrum`] = function (o, p) {
   return q;
 };
 e[`usesAnalyzer`] = function () {
-  return !false;
+  return true;
 };
 Uint8Spectrum[`prototype`] = e;
 var Float32Spectrum = function () {};
@@ -153,7 +153,7 @@ f[`getSpectrum`] = function (o, p) {
   return r;
 };
 f[`usesAnalyzer`] = function () {
-  return !false;
+  return true;
 };
 Float32Spectrum[`prototype`] = f;
 var BlackmanWindow = function () {
@@ -270,7 +270,7 @@ j[`getBeatAnalyzer`] = function () {
   return new DummyAnalyzer(this[`getBeats`]());
 };
 j[`getBeatAnalyzerSpectrum`] = function () {
-  this[`showSpectrum`] = !false;
+  this[`showSpectrum`] = true;
   return new DummyAnalyzer(this[`lastSpectrum`] ? this[`lastSpectrum`] : []);
 };
 PoorMansBeatDetection[`prototype`] = j;
@@ -395,7 +395,7 @@ l[`getBeats`] = function () {
 };
 l[`setupWebAudioNodes`] = function (o) {
   if (!this[`once`] && this[`analyzerCfg`]) {
-    this[`once`] = !false;
+    this[`once`] = true;
     var q = audioCtx[`createMediaElementSource`](o);
     q[`connect`](audioCtx[`destination`]);
     var r = audioCtx[`createAnalyser`]();
@@ -478,7 +478,7 @@ m[`startMusic`] = function (o) {
     document[`location`][`hash`] = "#" + p;
   }
   var q = document[`getElementById`](`player`);
-  q[`autoplay`] = !false;
+  q[`autoplay`] = true;
   /*
   $(`#isloading`)
     [`empty`]()
@@ -543,7 +543,7 @@ m[`startMusic`] = function (o) {
 };
 m[`startProgress`] = function (o) {
   this[`player`] = o;
-  this[`running`] = !false;
+  this[`running`] = true;
   this[`updateProgress`]();
 };
 m[`stopProgress`] = function () {
@@ -804,7 +804,7 @@ class VariationInverse extends Variation {
     this[`_inversecode`] = q;
   }
   [`hasInverse`]() {
-    return !false;
+    return true;
   }
   [`getInverseCode`]() {
     return this[`_inversecode`];
@@ -2639,7 +2639,7 @@ class Furnance {
       gl[`getExtension`](`OES_float_linear`) ||
       gl[`getExtension`](`OES_half_float_linear`);
     if (p) {
-      this[`useFloatTextures`] = !false;
+      this[`useFloatTextures`] = true;
     } else {
       this[`useFloatTextures`] = false;
     }
@@ -3246,7 +3246,7 @@ class DemoMain {
     /*
     cloudPlayer[`initMusic`](
       function () {
-        this[`isMusicReady`] = !false;
+        this[`isMusicReady`] = true;
       }[`bind`](this)
     );
     */
@@ -3309,7 +3309,7 @@ class DemoMain {
       if (!this[`currentAnimStart`]) this[`currentAnimStart`] = o;
       var p = this[`getConfig`]();
       var q, r, u;
-      while (!false) {
+      while (true) {
         q = this[`currentAnimStart`] + p[0];
         r = q + p[1] * 1000;
         u = r + p[2];
