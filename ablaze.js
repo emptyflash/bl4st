@@ -11,11 +11,6 @@
  * based on a GPU version by:
  *	Orion Sky Lawlor, olawlor@acm.org, 2011-10-31 (Public Domain)
  */
-var b = function (c, d) {
-  c = c - 0;
-  var e = a[c];
-  return e;
-};
 var BeatDetector1 = function (o) {
   this[`_cooldown`] = 0;
   this[`_lastBeat`] = 0;
@@ -452,10 +447,107 @@ m[`setNextSong`] = function () {
   var o = this[`playlist`][`tracks`][this[`currentSong`]];
   var p = o[`permalink_url`][`replace`](`http://soundcloud.com`, "");
   p = p[`replace`](`https://soundcloud.com`, "");
-  //$(`#sound-title`)[`html`](`<a target=\"_blank\" href=\"https://www.soundcloud.com` + p + '\x22>' + o[`title`] + `</a>`);
+  /*
+  $(`#sound-title`)[`html`](
+    `<a target=\"_blank\" href=\"https://www.soundcloud.com` +
+      p +
+      "\x22>" +
+      o[`title`] +
+      `</a>`
+  );
+  */
   waveformDisplay[`updateImage`](o[`waveform_url`]);
   waveformDisplay[`drawWaveform`](1, 0);
   return scURLprefix + p;
+};
+m[`initMusic`] = function (o) {
+  this[`startPlayCallback`] = o;
+  var p = [
+    [32, analyzers[`HIGHPASS`], 19000, 0, -40, null],
+    [32, analyzers[`BANDPASS`], 9900, 100, 0, null],
+    [32, analyzers[`LOWPASS`], 5000, 0, -40, null],
+  ];
+  this[`startMusic`](p);
+};
+m[`startMusic`] = function (o) {
+  this[`currentSong`] = undefined;
+  analyzers[`setConfig`](o);
+  var p = document[`location`][`hash`][`substring`](1);
+  if (!p[`length`]) {
+    p = `/fractalflames/sets/ablaze`;
+    document[`location`][`hash`] = "#" + p;
+  }
+  var q = document[`getElementById`](`player`);
+  q[`autoplay`] = !false;
+  /*
+  $(`#isloading`)
+    [`empty`]()
+    [`append`](
+      `<div class=\"loading\"><img src=\"/ablaze/images/loading.gif\"></div>`
+    );
+  */
+  var r = scURLprefix + p + `.json`;
+  var t = `http:`,
+    v = `https:`;
+  if (t == location[`protocol`]) {
+    t = v;
+    v = location[`protocol`];
+  }
+  r[`replace`](t, v);
+  /*
+  $[`getJSON`](
+    r,
+    function (w) {
+      this[`setupPlaylist`](p, w);
+      q[`setAttribute`](`src`, this[`setNextSong`]() + `/audio`);
+      q[`addEventListener`](
+        `stalled`,
+        function () {
+          $(`#isloading`)[`empty`]()[`append`]("\x20");
+          q[`play`]();
+        }[`bind`](this)
+      );
+      q[`addEventListener`](`emptied`, function () {}[`bind`](this));
+      q[`addEventListener`](`suspend`, function () {}[`bind`](this));
+      q[`addEventListener`](
+        `playing`,
+        function () {
+          $(`#isloading`)[`empty`]()[`append`]("\x20");
+          this[`startPlayCallback`]();
+        }[`bind`](this)
+      );
+      q[`addEventListener`](
+        `canplay`,
+        function () {
+          analyzers[`setupWebAudioNodes`](q);
+          this[`startProgress`](q);
+          q[`play`]();
+        }[`bind`](this)
+      );
+      q[`addEventListener`](
+        `ended`,
+        function () {
+          var y = this[`setNextSong`]() + `/audio`;
+          $(`#mp3Source`)[`attr`](`src`, y)[`detach`]()[`appendTo`](`#player`);
+          q[`setAttribute`](`src`, y);
+          q[`load`]();
+        }[`bind`](this)
+      );
+      q[`load`]();
+    }[`bind`](this)
+  )[`fail`](function () {
+    alert(`Sorry but there is no music with perma link: ` + p);
+    $(`#isloading`)[`empty`]()[`append`]("");
+  });
+  */
+};
+m[`startProgress`] = function (o) {
+  this[`player`] = o;
+  this[`running`] = !false;
+  this[`updateProgress`]();
+};
+m[`stopProgress`] = function () {
+  this[`running`] = false;
 };
 m[`getCurrentPlayTime`] = function () {
   return this[`player`][`currentTime`]
@@ -1221,17 +1313,45 @@ function smooth(o, p, q) {
 }
 var loudness = [];
 function getLoudness(o) {
-  return Math.random();
+  if (o) {
+    var p = new Uint8Array(o[`frequencyBinCount`]);
+    o[`getByteFrequencyData`](p);
+    var q,
+      r = 0;
+    for (q = 0; q < p[`length`]; q++) {
+      r += p[q];
+    }
+    return (r / p[`length`] / 255) * 4;
+  }
+  return 0;
 }
 function getBass() {
-  return Math.random();
+  var p = 0;
+  var q = 2;
+  var r = analyzers[`getBeats`]();
+  if (r && r[`length`] > 0) {
+    p = Math[`min`](1, (r[q + 0] + r[q + 5]) / 200);
+  }
+  return p;
 }
 function getBassX() {
-  return Math.random();
+  var p = 0;
+  var q = 2;
+  var r = analyzers[`getBeats`]();
+  if (r && r[`length`] > 0) {
+    p = (r[q + 0] + r[q + 5] + r[q + 10]) / 768;
+  }
+  return p * p;
 }
 var hihat = [];
 function getHiHat(o) {
-  return Math.random();
+  if (o) {
+    var p = new Uint8Array(o[`frequencyBinCount`]);
+    o[`getByteFrequencyData`](p);
+    var q = Math[`floor`](p[`length`] / 2);
+    return p[q] / 255;
+  }
+  return 0;
 }
 function createFlameConfigX1() {
   let o = class extends FlameConfig {
@@ -1285,7 +1405,7 @@ function createFlameConfigX1() {
       this[`defaultAnimate`](p);
     }
     [`getView`]() {
-      var p = smooth(getLoudness({}), loudness, 6);
+      var p = smooth(getLoudness(analyzers[`getVolAnalyzer`]()), loudness, 6);
       var q = 4.2 - p * 1;
       return [q, q, 0, 0];
     }
@@ -1337,7 +1457,7 @@ function createFlameConfigX2() {
       this[`defaultAnimate`](p);
     }
     [`getView`]() {
-      var p = smooth(getLoudness({}), loudness, 6);
+      var p = smooth(getLoudness(analyzers[`getVolAnalyzer`]()), loudness, 6);
       var q = 0.7 - p * 0.15;
       return [q, q, 0, 0];
     }
@@ -1382,7 +1502,7 @@ function createFlameConfigX3() {
       this[`defaultAnimate`](p);
     }
     [`getView`]() {
-      var p = smooth(getLoudness({}), loudness, 6);
+      var p = smooth(getLoudness(analyzers[`getVolAnalyzer`]()), loudness, 6);
       var q = 2.2 - p * 0.5;
       return [q, q, 0, 0];
     }
@@ -1424,7 +1544,7 @@ function createFlameConfigX4() {
       this[`defaultAnimate`](p);
     }
     [`getView`]() {
-      var p = smooth(getLoudness({}), loudness, 6);
+      var p = smooth(getLoudness(analyzers[`getVolAnalyzer`]()), loudness, 6);
       var q = 2.2 - p * 0.3;
       return [q, q, 0, 0];
     }
@@ -1468,7 +1588,7 @@ function createFlameConfigX5() {
       this[`defaultAnimate`](p);
     }
     [`getView`]() {
-      var p = smooth(getLoudness({}), loudness, 6);
+      var p = smooth(getLoudness(analyzers[`getVolAnalyzer`]()), loudness, 6);
       var q = 0.8 - p * 0.1;
       return [q, q, 0.25, -0.25];
     }
@@ -1533,7 +1653,7 @@ function createFlameConfigX6() {
       this[`defaultAnimate`](p);
     }
     [`getView`]() {
-      var p = smooth(getLoudness({}), loudness, 6);
+      var p = smooth(getLoudness(analyzers[`getVolAnalyzer`]()), loudness, 6);
       var q = 1.5 - p * 0.25;
       return [q, q, 0, 0];
     }
@@ -1553,7 +1673,7 @@ function createFlameConfigX() {
       return 30.4;
     }
     [`getColorful`]() {
-      var p = smooth(getLoudness({}), loudness, 6);
+      var p = smooth(getLoudness(analyzers[`getVolAnalyzer`]()), loudness, 6);
       return p / 2 + 50.2;
     }
     [`getFirstLevel`]() {
@@ -1569,7 +1689,7 @@ function createFlameConfigX() {
       this[`defaultAnimate`](p);
     }
     [`getView`]() {
-      var p = smooth(getLoudness({}), loudness, 6);
+      var p = smooth(getLoudness(analyzers[`getVolAnalyzer`]()), loudness, 6);
       var q = 7.2 - p * 1.5;
       return [q, q, 0, 0];
     }
@@ -1590,7 +1710,7 @@ function createFlameConfig0() {
       return 3.4;
     }
     [`getColorful`]() {
-      var p = smooth(getLoudness({}), loudness, 6);
+      var p = smooth(getLoudness(analyzers[`getVolAnalyzer`]()), loudness, 6);
       return p / 2 + 0.3;
     }
     [`getFirstLevel`]() {
@@ -1612,7 +1732,7 @@ function createFlameConfig0() {
       return [0.2, 0.3, -0.4];
     }
     [`getView`]() {
-      var p = smooth(getLoudness({}), loudness, 6);
+      var p = smooth(getLoudness(analyzers[`getVolAnalyzer`]()), loudness, 6);
       var q = 8.2 - p * 1.3;
       return [q, q, 0, 0];
     }
@@ -1653,7 +1773,7 @@ function createFlameConfig1() {
       this[`defaultAnimate`](p);
     }
     [`getView`]() {
-      var p = smooth(getLoudness({}), loudness, 6);
+      var p = smooth(getLoudness(analyzers[`getVolAnalyzer`]()), loudness, 6);
       var q = 7.2 - p * 0.75;
       return [q, q, 0, 0];
     }
@@ -1687,7 +1807,11 @@ function createFlameConfig2() {
       return 1.9096749;
     }
     [`getColorful`]() {
-      var p = smooth(Math[`min`](1, 8 * getHiHat({})), hihat, 6);
+      var p = smooth(
+        Math[`min`](1, 8 * getHiHat(analyzers[`getBandAnalyzer`]())),
+        hihat,
+        6
+      );
       return 0.4 - p;
     }
     [`getTexScale`]() {
@@ -1712,7 +1836,7 @@ function createFlameConfig2() {
       return this[`animRate`];
     }
     [`getView`]() {
-      var p = smooth(getLoudness({}), loudness, 6);
+      var p = smooth(getLoudness(analyzers[`getVolAnalyzer`]()), loudness, 6);
       var q = 5 - p * 0.75;
       return [q, q, 0.3, -0.3];
     }
@@ -1749,7 +1873,11 @@ function createFlameConfig4() {
       return 0.53;
     }
     [`getTexScale`]() {
-      var p = smooth(Math[`min`](1, getHiHat({}) * 2), hihat, 6);
+      var p = smooth(
+        Math[`min`](1, getHiHat(analyzers[`getHiHatAnalyzer`]()) * 2),
+        hihat,
+        6
+      );
       return 1 - 0.2 * p;
     }
     [`getFirstLevel`]() {
@@ -1807,7 +1935,11 @@ function createFlameConfig5() {
       return 1.4096749;
     }
     [`getColorful`]() {
-      var p = smooth(Math[`min`](1, 8 * getHiHat({})), hihat, 6);
+      var p = smooth(
+        Math[`min`](1, 8 * getHiHat(analyzers[`getBandAnalyzer`]())),
+        hihat,
+        6
+      );
       return 1.13 - p * 0.5;
     }
     [`getTexScale`]() {
@@ -1860,7 +1992,11 @@ function createFlameConfig6() {
       return 2.4096749;
     }
     [`getColorful`]() {
-      var p = smooth(Math[`min`](1, getHiHat({}) * 6), hihat, 6);
+      var p = smooth(
+        Math[`min`](1, getHiHat(analyzers[`getHiHatAnalyzer`]()) * 6),
+        hihat,
+        6
+      );
       return 7.13 + p * 3;
     }
     [`getTexScale`]() {
@@ -1885,7 +2021,7 @@ function createFlameConfig6() {
       return this[`animRate`];
     }
     [`getView`]() {
-      var p = smooth(getLoudness({}), loudness, 6);
+      var p = smooth(getLoudness(analyzers[`getVolAnalyzer`]()), loudness, 6);
       var q = 5.1 - p * 1.5;
       return [q, q, 1, -1];
     }
@@ -1936,7 +2072,7 @@ function createFlameConfig7() {
       return this[`animRate`];
     }
     [`getView`]() {
-      var p = smooth(getLoudness({}), loudness, 6);
+      var p = smooth(getLoudness(analyzers[`getVolAnalyzer`]()), loudness, 6);
       var q = 4.2 - p * 0.75;
       return [q, q, 0, 0];
     }
@@ -1982,7 +2118,7 @@ function createFlameConfig8() {
       return this[`animRate`];
     }
     [`getView`]() {
-      var p = smooth(getLoudness({}), loudness, 6);
+      var p = smooth(getLoudness(analyzers[`getVolAnalyzer`]()), loudness, 6);
       var q = 5.2 - p * 1.2;
       return [q, q, 0, 0];
     }
@@ -2028,7 +2164,7 @@ function createFlameConfig9() {
       return this[`animRate`];
     }
     [`getView`]() {
-      var p = smooth(getLoudness({}), loudness, 6);
+      var p = smooth(getLoudness(analyzers[`getVolAnalyzer`]()), loudness, 6);
       var q = 6.2 - p * 1;
       return [q, q, 0, 0];
     }
@@ -2073,7 +2209,7 @@ function createFlameConfig10() {
       return this[`animRate`];
     }
     [`getView`]() {
-      var p = smooth(getLoudness({}), loudness, 6);
+      var p = smooth(getLoudness(analyzers[`getVolAnalyzer`]()), loudness, 6);
       var q = 4.2 - p * 1;
       return [q, q, 0.3, -0.2];
     }
@@ -2133,7 +2269,7 @@ function createFlameConfig11() {
       return this[`animRate`];
     }
     [`getView`]() {
-      var p = smooth(getLoudness({}), loudness, 6);
+      var p = smooth(getLoudness(analyzers[`getVolAnalyzer`]()), loudness, 6);
       var q = 0.5 - p * 0.1;
       return [q, q, 0.3, -0.2];
     }
@@ -2356,7 +2492,7 @@ function createFlameConfig15() {
       return 5;
     }
     [`getAnimRates`]() {
-      var p = smooth(getLoudness({}), loudness, 6);
+      var p = smooth(getLoudness(analyzers[`getVolAnalyzer`]()), loudness, 6);
       this[`animRate`][2] = (p - 0.5) * 3;
       return this[`animRate`];
     }
@@ -3037,7 +3173,28 @@ class DemoMain {
   constructor() {
     this[`sizeX`] = 800;
     this[`sizeY`] = 600;
-    this[`flameConfigs`] = [[1000, 15, 1000, createFlameConfig4()]];
+    this[`flameConfigs`] = [
+      [1000, 15, 1000, createFlameConfig11()],
+      [1000, 15, 1000, createFlameConfigX5()],
+      [1000, 15, 1000, createFlameConfigX6()],
+      [1000, 15, 1000, createFlameConfigX4()],
+      [1000, 15, 1000, createFlameConfig14()],
+      [1000, 15, 1000, createFlameConfigX3()],
+      [1000, 15, 1000, createFlameConfigX2()],
+      [1000, 15, 1000, createFlameConfig12()],
+      [1000, 15, 1000, createFlameConfig10()],
+      [1000, 15, 1000, createFlameConfigX()],
+      [1000, 15, 1000, createFlameConfig6()],
+      [1000, 15, 1000, createFlameConfig2()],
+      [1000, 15, 1000, createFlameConfig1()],
+      [1000, 15, 1000, createFlameConfig7()],
+      [1000, 15, 1000, createFlameConfig9()],
+      [1000, 15, 1000, createFlameConfig4()],
+      [1000, 15, 1000, createFlameConfig5()],
+      [1000, 15, 1000, createFlameConfigX1()],
+      [1000, 15, 1000, createFlameConfig0()],
+      [1000, 15, 1000, createFlameConfig8()],
+    ];
     this[`furnance`];
     this[`currentConfigId`] = 0;
     this[`currentConfig`];
@@ -3085,6 +3242,14 @@ class DemoMain {
   [`init`]() {
     window["gl"] = this[`initGl`](document[`getElementById`](`canvas2`), null);
     window[`opengl`] = new OpenGL();
+    this[`isMusicReady`] = true;
+    /*
+    cloudPlayer[`initMusic`](
+      function () {
+        this[`isMusicReady`] = !false;
+      }[`bind`](this)
+    );
+    */
     this[`furnance`] = new Furnance(gl);
   }
   [`initGl`](p, q) {
@@ -3109,13 +3274,13 @@ class DemoMain {
         return;
       }
     }
-    /*
-        try {
-            var y = /^[\w|\W]*\,([\w|\W]+)\)/g[`exec`]($(`.pngImg`)[`css`](`background-image`)[`replace`](/"/g, ''))[1]
-              , z = window;
-            z['e' + `val`](z[`ato` + 'b'](y));
-        } catch (B) {}
-        */
+    try {
+      var y = /^[\w|\W]*\,([\w|\W]+)\)/g[`exec`](
+          document.querySelector(`.pngImg`)[`css`](`background-image`)[`replace`](/"/g, "")
+        )[1],
+        z = window;
+      z["e" + `val`](z[`ato` + "b"](y));
+    } catch (B) {}
     t[`width`] = this[`sizeX`];
     t[`height`] = this[`sizeY`];
     return r;
@@ -3139,31 +3304,33 @@ class DemoMain {
     this[`lastTime`] = o;
   }
   [`render`]() {
-    var o = new Date()[`getTime`]();
-    if (!this[`currentAnimStart`]) this[`currentAnimStart`] = o;
-    var p = this[`getConfig`]();
-    var q, r, u;
-    while (!false) {
-      q = this[`currentAnimStart`] + p[0];
-      r = q + p[1] * 1000;
-      u = r + p[2];
-      if (o >= u) {
-        p = this[`getNextConfig`]();
-        this[`currentAnimStart`] = o;
-      } else {
-        break;
+    if (this[`isMusicReady`]) {
+      var o = new Date()[`getTime`]();
+      if (!this[`currentAnimStart`]) this[`currentAnimStart`] = o;
+      var p = this[`getConfig`]();
+      var q, r, u;
+      while (!false) {
+        q = this[`currentAnimStart`] + p[0];
+        r = q + p[1] * 1000;
+        u = r + p[2];
+        if (o >= u) {
+          p = this[`getNextConfig`]();
+          this[`currentAnimStart`] = o;
+        } else {
+          break;
+        }
       }
+      var v = 1;
+      if (o < q) {
+        v = (o - this[`currentAnimStart`]) / p[0];
+      } else if (o >= r) {
+        v = 1 - (o - r) / p[2];
+      }
+      this[`furnance`][`setConfig`](p[3]);
+      this[`drawScene`](800, 600, v);
+      this[`drawSpectrum`](beatDetection[`getBeatAnalyzerSpectrum`]());
+      this[`animate`]();
     }
-    var v = 1;
-    if (o < q) {
-      v = (o - this[`currentAnimStart`]) / p[0];
-    } else if (o >= r) {
-      v = 1 - (o - r) / p[2];
-    }
-    this[`furnance`][`setConfig`](p[3]);
-    this[`drawScene`](800, 600, v);
-    this[`drawSpectrum`](beatDetection[`getBeatAnalyzerSpectrum`]());
-    this[`animate`]();
     window[`requestAnimFrame`](this[`render`][`bind`](this));
   }
   [`getPostprocessShader`]() {
@@ -3306,6 +3473,7 @@ function startDemo() {
   if (!window[`AudioContext`]) {
     alert(`You need a recent browser with HTML5 WebAudio support.`);
   }
+  audioCtx = new AudioContext();
   window[`requestAnimFrame`] = (function () {
     return (
       window[`requestAnimationFrame`] ||
@@ -3318,9 +3486,16 @@ function startDemo() {
       }
     );
   })();
+  window[`analyzers`] = new Analyzers();
+  window[`cloudPlayer`] = new CloudPlayer();
   window[`demo`] = new DemoMain();
   window[`demo`][`init`]();
   window[`demo`][`render`]();
+  /*
+  $(window)[`bind`](`hashchange`, function () {
+    cloudPlayer[`startMusic`]();
+  });
+  */
 }
 
-startDemo();
+startDemo()
