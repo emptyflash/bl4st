@@ -1,5 +1,5 @@
 /**
- * Ablaze
+ * Ablaze (https://wothke.ch/ablaze)
  *
  * JavaScript/WEBGL2 music visualization using "fractal flames".
  *
@@ -220,6 +220,13 @@ function expandString(e, t) {
     return t[e] || e;
   });
 }
+function handleLookup(self, val) {
+  if (val instanceof Function) {
+    const context = self.getContext()
+    return val(context)
+  }
+  return val
+}
 class Variation {
   constructor(e, t, r) {
     (this._name = e), (this._code = t), (this._areaCode = r);
@@ -382,31 +389,37 @@ var PLANE_TEX_FUNCs =
     "const float M_PI=3.14159265358979;\nconst float M_1_PI=1.0/M_PI;\nconst float EPS=1.0e-6;\nuniform float texscale;\nuniform float texscalei;\nfloat atan2(float y, float x) {\n  float t0, t1, t2, t3, t4;\n  t3 = abs(x);\n  t1 = abs(y);\n  t0 = max(t3, t1);\n  t1 = min(t3, t1);\n  t3 = 1.0 / t0;\n  t3 = t1 * t3;\n  t4 = t3 * t3;\n  t0 =          -0.013480470;\n  t0 = t0 * t4 + 0.057477314;\n  t0 = t0 * t4 - 0.121239071;\n  t0 = t0 * t4 + 0.195635925;\n  t0 = t0 * t4 - 0.332994597;\n  t0 = t0 * t4 + 0.999995630;\n  t3 = t0 * t3;\n  if (abs(y) > abs(x)) t3= 1.570796327 - t3;\n  if (x < 0.0) t3=  M_PI - t3;\n  if (y < 0.0) t3= -t3;\n  return t3;\n}",
   flameTransformCount = 0;
 class FlameTransform extends Variation {
-  constructor(e, t, r, a, i, n) {
+  constructor(weight, name, wvar, x, y, o) {
     super("", "", ""),
       (this._tag = "" + flameTransformCount++),
-      (this._var = lookupVariationId(t)),
-      (this._weight = e),
-      (this._x = a),
-      (this._y = i),
-      (this._o = n),
-      (this._wvar = r),
+      (this._var = lookupVariationId(name)),
+      (this._weight = weight),
+      (this._x = x),
+      (this._y = y),
+      (this._o = o),
+      (this._wvar = wvar),
       (this._nUniforms = 8);
   }
   getTag() {
     return this._tag;
   }
   getWeight() {
-    return this._weight;
+    return handleLookup(this, this._weight);
+  }
+  getWVar() {
+    return handleLookup(this, this._wvar);
   }
   getX() {
-    return vec2.fromValues(this._x[0], this._x[1]);
+    const x = handleLookup(this, this._x);
+    return vec2.fromValues(x[0], x[1]);
   }
   getY() {
-    return vec2.fromValues(this._y[0], this._y[1]);
+    const y = handleLookup(this, this._y);
+    return vec2.fromValues(y[0], y[1]);
   }
   getO() {
-    return vec2.fromValues(this._o[0], this._o[1]);
+    const o = handleLookup(this, this._o);
+    return vec2.fromValues(o[0], o[1]);
   }
   setX(e) {
     this._x = e;
@@ -416,6 +429,21 @@ class FlameTransform extends Variation {
   }
   setO(e) {
     this._o = e;
+  }
+
+  setTime(t) {
+    this._time = t
+  }
+
+  getContext() {
+    return {
+      x: this._x,
+      y: this._y,
+      o: this._o,
+      weight: this._weight,
+      wvar: this._wvar,
+      time: this._time,
+    }
   }
   equals(e) {
     return "undefined" != typeof e && this._var == e._var;
@@ -428,28 +456,36 @@ class FlameTransform extends Variation {
     return expandString("uniform vec2 xf%TAG%[8];", e);
   }
   getAffineArea() {
+    const wvar = this.getWVar()
+    const x = this.getX()
+    const y = this.getY()
     return Math.abs(
-      this._wvar *
-        this._wvar *
-        (this._x[0] * this._y[1] - this._x[1] * this._y[0])
+      wvar * wvar * (x[0] * y[1] - x[1] * y[0])
     );
   }
   makeInverseMatrix(e, t) {
-    var r = 1 / (this._x[0] * this._y[1] - this._x[1] * this._y[0]);
-    (e[t + 0] = vec2.fromValues(r * this._y[1], r * -this._x[1])),
-      (e[t + 1] = vec2.fromValues(r * -this._y[0], r * this._x[0]));
-    var i = vec2.scale(vec2.create(), e[t], this._o[0]),
-      a = vec2.scale(vec2.create(), e[t + 1], this._o[1]),
+    const x = this.getX()
+    const y = this.getY()
+    const o = this.getO()
+    var r = 1 / (x[0] * y[1] - x[1] * y[0]);
+    (e[t + 0] = vec2.fromValues(r * y[1], r * -x[1])),
+      (e[t + 1] = vec2.fromValues(r * -y[0], r * x[0]));
+    var i = vec2.scale(vec2.create(), e[t], o[0]),
+      a = vec2.scale(vec2.create(), e[t + 1], o[1]),
       n = vec2.add(i, i, a);
     e[t + 2] = vec2.fromValues(-n[0], -n[1]);
   }
   getXfUniforms(e) {
-    (e[0] = this._x),
-      (e[1] = this._y),
-      (e[2] = this._o),
-      this.makeInverseMatrix(e, 3),
-      (e[6] = vec2.fromValues(this._wvar, 1 / this._wvar)),
-      (e[7] = vec2.fromValues(this.getAffineArea(), 0));
+    const wvar = this.getWVar()
+    const x = this.getX()
+    const y = this.getY()
+    const o = this.getO()
+    e[0] = x
+    e[1] = y
+    e[2] = o
+    this.makeInverseMatrix(e, 3)
+    e[6] = vec2.fromValues(wvar, 1 / wvar)
+    e[7] = vec2.fromValues(this.getAffineArea(), 0)
   }
   getFloat32Array(e) {
     var t,
@@ -501,1014 +537,70 @@ class FlameTransform extends Variation {
     return t;
   }
 }
-/*
-function createFlameConfigX1() {
-  return new (class extends FlameConfig {
-    constructor() {
-      super([
-        [
-          0.14,
-          "linear",
-          1,
-          [-0.4999998, -0.8660256],
-          [0.8660256, -0.4999998],
-          [0, 0],
-        ],
-        [0.22, "linear", 1, [0.5, -0.8660254], [0.8660254, 0.5], [0, 0]],
-        [0.5, "linear", 1.22, [-1, 0], [10, -1], [-1.732051, -0.2]],
-        [
-          0.4,
-          "spherical",
-          0.4,
-          [0.8689958, 0.101100525],
-          [-0.01100525, 0.8689958],
-          [0.02201051, -1.737992],
-        ],
-      ]);
-    }
-    getMapExposure() {
-      return 0.66;
-    }
-    getColorful() {
-      return -1.7731;
-    }
-    getTexScale() {
-      return 5.2;
-    }
-    getFirstLevel() {
-      return 5;
-    }
-    getLastLevel() {
-      return 10;
-    }
-    getScreenInitVal() {
-      return 0.86;
-    }
-    getScreenInitScale() {
-      return 0.650042;
-    }
-    getIterations() {
-      return 5;
-    }
-    getView() {
-      var e = 1,
-        t = 4.2 - 1 * e;
-      return [t, t, 0, 0];
-    }
-  })();
-}
-function createFlameConfigX2() {
-  return new (class extends FlameConfig {
-    constructor() {
-      super([
-        [0.119449, "linear", 0.9, [0.31, -3.71], [0.1, 0.5], [0.35, 0.8]],
-        [0.2015748, "linear", 0.7, [0.5, 0], [0, 0.5], [-0.5, 0]],
-        [0.8976378, "spherical", 0.1, [0.8, -0.4], [0.4, 0.8], [0.2, 0.4]],
-        [
-          0.6929134,
-          "spherical",
-          0.2,
-          [-0.8, 0.4],
-          [-0.4, -10.8],
-          [0.02, -0.04],
-        ],
-      ]);
-    }
-    getMapExposure() {
-      return 0.63749;
-    }
-    getColorful() {
-      return 0.33323;
-    }
-    getTexScale() {
-      return 1;
-    }
-    getFirstLevel() {
-      return 7;
-    }
-    getLastLevel() {
-      return 10;
-    }
-    getScreenInitVal() {
-      return 0.074;
-    }
-    getScreenInitScale() {
-      return 13.2;
-    }
-    getIterations() {
-      return 5;
-    }
-    getView() {
-      var e = 1,
-        t = 0.7 - 0.15 * e;
-      return [t, t, 0, 0];
-    }
-  })();
-}
-function createFlameConfigX3() {
-  return new (class extends FlameConfig {
-    constructor() {
-      super([
-        [0.1, "spherical", 0.66, [10.5, 10], [10, 0.5], [-1.35, 0]],
-        [0.6, "fisheye", 0.22, [10.8, -0.4], [0.14, 0.8], [-0.2, 0.2]],
-        [0.5, "swirl", 0.5, [-0.1, 0.4], [-0.1, -0.2], [10.2, 0.1]],
-        [0.2, "spiral", 0.3, [0.4, 0], [-0.1, 0.1], [-0.2, 0]],
-      ]);
-    }
-    getMapExposure() {
-      return 7.4;
-    }
-    getColorful() {
-      return 0.5323;
-    }
-    getTexScale() {
-      return 0.61;
-    }
-    getFirstLevel() {
-      return 7;
-    }
-    getLastLevel() {
-      return 10;
-    }
-    getScreenInitVal() {
-      return 0.1;
-    }
-    getScreenInitScale() {
-      return 1.3;
-    }
-    getIterations() {
-      return 5;
-    }
-    getView() {
-      var e = 1,
-        t = 2.2 - 0.5 * e;
-      return [t, t, 0, 0];
-    }
-  })();
-}
-function createFlameConfigX4() {
-  return new (class extends FlameConfig {
-    constructor() {
-      super([
-        [0.2, "linear", 1, [0.5, 0], [0, 0.5], [0.5, 0]],
-        [0.55, "linear", 1, [0.5, 0], [0, 0.5], [-0.5, 0]],
-        [0.8, "spherical", 1.8, [0.8, -0.4], [0.4, 0.8], [0.2, 0.4]],
-        [0.8, "spherical", 0.4, [-0.8, 0.4], [-0.4, -0.8], [0.2, 0.4]],
-      ]);
-    }
-    getMapExposure() {
-      return 0.6;
-    }
-    getColorful() {
-      return 0.6323;
-    }
-    getTexScale() {
-      return 0.5;
-    }
-    getFirstLevel() {
-      return 7;
-    }
-    getLastLevel() {
-      return 10;
-    }
-    getScreenInitVal() {
-      return 10.4;
-    }
-    getScreenInitScale() {
-      return 0.122;
-    }
-    getView() {
-      var e = 1,
-        t = 2.2 - 0.3 * e;
-      return [t, t, 0, 0];
-    }
-  })();
-}
-function createFlameConfigX5() {
-  return new (class extends FlameConfig {
-    constructor() {
-      super([
-        [0.33, "linear", 1.3, [0.5, 0], [0, 0.5], [0.5, 0]],
-        [0.33, "spherical", 0.3, [1, 0.5], [-0.5, 1], [0, -0.5]],
-        [0.43, "spherical", 0.4, [-1, -0.5], [0.5, -1], [1, 1]],
-      ]);
-    }
-    getMapExposure() {
-      return 2.1;
-    }
-    getColorful() {
-      return 0.7323;
-    }
-    getTexScale() {
-      return 0.5;
-    }
-    getFirstLevel() {
-      return 7;
-    }
-    getLastLevel() {
-      return 10;
-    }
-    getScreenInitVal() {
-      return 10.4;
-    }
-    getScreenInitScale() {
-      return 0.122;
-    }
-    getIterations() {
-      return 2;
-    }
-    getView() {
-      var e = 1,
-        t = 0.8 - 0.1 * e;
-      return [t, t, 0.25, -0.25];
-    }
-  })();
-}
-function createFlameConfigX() {
-  return new (class extends FlameConfig {
-    constructor() {
-      super([
-        [0.3333, "swirl", 0.4, [6.5, 10], [0.44, 0.5], [0.33, 0.4]],
-        [0.1333, "spherical", 0.4, [0.7888, 0.9], [0.3, 0.8], [0.566, 0.5]],
-        [0.63333, "diamond", 0.6, [0.5, 0], [0, 0.5], [0, 10.551]],
-      ]);
-    }
-    getMapExposure() {
-      return 30.4;
-    }
-    getColorful() {
-      var e = 1;
-      return e / 2 + 50.2;
-    }
-    getFirstLevel() {
-      return 8;
-    }
-    getLastLevel() {
-      return 12;
-    }
-    getIterations() {
-      return 5;
-    }
-    getView() {
-      var e = 1,
-        t = 7.2 - 1.5 * e;
-      return [t, t, 0, 0];
-    }
-  })();
-}
-function createFlameConfig0() {
-  return new (class extends FlameConfig {
-    constructor() {
-      super([
-        [0.3333, "spherical", 0.4, [0.5, 0], [0, 0.5], [-0.566, 0.4]],
-        [0.2333, "spherical", 0.4, [0.5, 0], [0, 0.5], [0.566, 0.4]],
-        [0.3333, "hyperbolic", 0.4, [0.5, 0], [0, 0.5], [0, -0.551]],
-      ]),
-        initAbsRotation(this);
-    }
-    getMapExposure() {
-      return 3.4;
-    }
-    getColorful() {
-      var e = 1;
-      return e / 2 + 0.3;
-    }
-    getFirstLevel() {
-      return 8;
-    }
-    getLastLevel() {
-      return 12;
-    }
-    getIterations() {
-      return 5;
-    }
-    getScreenInitVal() {
-      return 0.9;
-    }
-    getAnimRates() {
-      return [0.2, 0.3, -0.4];
-    }
-    getView() {
-      var e = 1,
-        t = 8.2 - 1.3 * e;
-      return [t, t, 0, 0];
-    }
-  })();
-}
-function createFlameConfig1() {
-  return new (class extends FlameConfig {
-    constructor() {
-      super([
-        [0.3333, "spherical", 0.4, [0.5, 0], [0, 0.5], [-0.566, 0.4]],
-        [0.3333, "spherical", 0.4, [0.5, 0], [0, 0.5], [0.566, 0.4]],
-        [0.3333, "spherical", 0.4, [0.5, 0], [0, 0.5], [0, -0.551]],
-      ]);
-    }
-    getMapExposure() {
-      return 1.7;
-    }
-    getColorful() {
-      return 0.5;
-    }
-    getFirstLevel() {
-      return 7;
-    }
-    getLastLevel() {
-      return 11;
-    }
-    getIterations() {
-      return 4;
-    }
-    getScreenInitScale() {
-      return 4;
-    }
-    getTexScale() {
-      return 4;
-    }
-    getView() {
-      var e = 1,
-        t = 7.2 - 0.75 * e;
-      return [t, t, 0, 0];
-    }
-  })();
-}
-function createFlameConfig2() {
-  return new (class extends FlameConfig {
-    constructor() {
-      super([
-        [
-          0.3333,
-          "horseshoe",
-          1.2,
-          [-0.9970145, -0.984873],
-          [0.16221, 0.946498],
-          [-0.606021, 0.7473919],
-        ],
-        [
-          0.6333,
-          "spherical",
-          0.7,
-          [0.235448, -0.599886],
-          [0.571187, 0.322248],
-          [-0.871327, 0.469188],
-        ],
-      ])
-    }
-    getMapExposure() {
-      return 1.9096749;
-    }
-    getColorful() {
-      var e = 1;
-      return 0.4 - e;
-    }
-    getTexScale() {
-      return -0.8790305;
-    }
-    getFirstLevel() {
-      return 8;
-    }
-    getLastLevel() {
-      return 10;
-    }
-    getScreenInitVal() {
-      return 0.6;
-    }
-    getScreenInitScale() {
-      return 0.60042;
-    }
-    getIterations() {
-      return 3;
-    }
-    getView() {
-      var e = 1,
-        t = 5 - 0.75 * e;
-      return [t, t, 0.3, -0.3];
-    }
-  })();
-}
-function createFlameConfig4() {
-  return new (class extends FlameConfig {
-    constructor() {
-      super([
-        [
-          0.533,
-          "sinusoidal",
-          0.9,
-          [4.172915, 9.464352],
-          [-9.464352, 4.172915],
-          [4.741241, -2.293564],
-        ],
-        [
-          0.333,
-          "spherical",
-          1,
-          [0.4997272, 0.2070764],
-          [-0.2070764, 0.4997272],
-          [0, 0],
-        ],
-        [0.333, "julia", 1, [4.001953, 17e-8], [-17e-8, 4.001953], [0, 0]],
-      ]);
-    }
-    getMapExposure() {
-      return 0.9096749;
-    }
-    getColorful() {
-      return 0.53;
-    }
-    getTexScale() {
-      var e = 1;
-      return 1 - 0.2 * e;
-    }
-    getFirstLevel() {
-      return 6;
-    }
-    getLastLevel() {
-      return 10;
-    }
-    getScreenInitVal() {
-      return 1;
-    }
-    getScreenInitScale() {
-      return 0.9;
-    }
-    getIterations() {
-      return 3;
-    }
-  })();
-}
-var x = 0;
-function createFlameConfig5() {
-  return new (class extends FlameConfig {
-    constructor() {
-      super([
-        [1.233, "julia", -3.53, [4.001953, 17e-8], [-17e-8, 4.001953], [0, 0]],
-        [
-          0.13,
-          "sinusoidal",
-          1.532,
-          [4.172915, 9.464352],
-          [-9.464352, 4.172915],
-          [4.741241, -2.293564],
-        ],
-        [
-          0.333,
-          "spherical",
-          0.4,
-          [0.7997272, 0.2070764],
-          [-0.2070764, 0.7997272],
-          [0, 0],
-        ],
-      ]),
-        (this.sc = 0.1)
-    }
-    getMapExposure() {
-      return 1.4096749;
-    }
-    getColorful() {
-      var e = 1;
-      return 1.13 - 0.5 * e;
-    }
-    getTexScale() {
-      return this.sc;
-    }
-    getFirstLevel() {
-      return 7;
-    }
-    getLastLevel() {
-      return 10;
-    }
-    getScreenInitVal() {
-      return 1;
-    }
-    getScreenInitScale() {
-      return 0.9;
-    }
-    getIterations() {
-      return 3;
-    }
-  })();
-}
-function createFlameConfig6() {
-  return new (class extends FlameConfig {
-    constructor() {
-      super([
-        [0.333, "hyperbolic", 0.45, [-5e-8, 1.25], [-1.25, -5e-8], [0.2, -0.4]],
-        [
-          1.233,
-          "julia",
-          4,
-          [0.7457995, -0.06098665],
-          [0.06098665, 0.7457995],
-          [0.06173, -0.24791667],
-        ],
-      ])
-    }
-    getMapExposure() {
-      return 2.4096749;
-    }
-    getColorful() {
-      var e = 1;
-      return 7.13 + 3 * e;
-    }
-    getTexScale() {
-      return 0.55;
-    }
-    getFirstLevel() {
-      return 6;
-    }
-    getLastLevel() {
-      return 9;
-    }
-    getScreenInitVal() {
-      return 0.3;
-    }
-    getScreenInitScale() {
-      return 0.1;
-    }
-    getIterations() {
-      return 5;
-    }
-    getView() {
-      var e = 1,
-        t = 5.1 - 1.5 * e;
-      return [t, t, 1, -1];
-    }
-  })();
-}
-function createFlameConfig7() {
-  return new (class extends FlameConfig {
-    constructor() {
-      super([
-        [0.533, "hyperbolic", 1.5, [-5e-8, 1.25], [-1.25, -5e-8], [0, 0]],
-        [
-          0.533,
-          "spherical",
-          1,
-          [0.7457995, -0.06098665],
-          [0.06098665, 0.7457995],
-          [0.06173, -0.4791667],
-        ],
-      ]);
-    }
-    getMapExposure() {
-      return 0.813749;
-    }
-    getColorful() {
-      return -2.033323;
-    }
-    getTexScale() {
-      return 1.3;
-    }
-    getFirstLevel() {
-      return 4;
-    }
-    getLastLevel() {
-      return 10;
-    }
-    getScreenInitVal() {
-      return 0.3;
-    }
-    getScreenInitScale() {
-      return 0.2;
-    }
-    getIterations() {
-      return 4;
-    }
-    getView() {
-      var e = 1,
-        t = 4.2 - 0.75 * e;
-      return [t, t, 0, 0];
-    }
-  })();
-}
-function createFlameConfig8() {
-  return new (class extends FlameConfig {
-    constructor() {
-      super([
-        [0.4409449, "linear", 1, [0.5, 0], [0, 0.5], [0.5, 0]],
-        [0.4015748, "linear", 1, [0.5, 0.55], [0.4, 0.5], [-0.5, 0]],
-        [0.8976378, "spherical", 0.5, [0.8, -0.4], [0.4, 0.8], [0.2, 0.4]],
-        [0.6929134, "spherical", 0.2, [-0.8, 0.4], [-0.4, -0.8], [0.2, 0.4]],
-      ])
-    }
-    getMapExposure() {
-      return -12.36133749;
-    }
-    getColorful() {
-      return 2.5363323;
-    }
-    getTexScale() {
-      return 2.9;
-    }
-    getFirstLevel() {
-      return 7;
-    }
-    getLastLevel() {
-      return 12;
-    }
-    getScreenInitVal() {
-      return 0.1;
-    }
-    getScreenInitScale() {
-      return 2.6;
-    }
-    getIterations() {
-      return 4;
-    }
-    getView() {
-      var e = 1,
-        t = 5.2 - 1.2 * e;
-      return [t, t, 0, 0];
-    }
-  })();
-}
-function createFlameConfig9() {
-  return new (class extends FlameConfig {
-    constructor() {
-      super([
-        [0.2, "linear", 1.4, [10.5, 0], [0, 0.5], [0.5, 0]],
-        [0.2, "linear", 1, [0.5, 0], [10, 0.5], [-0.5, 0]],
-        [0.8, "spherical", 0.8, [0.1, -0.4], [0.4, 0.41], [0.333, 0.4]],
-        [0.8, "spherical", 0.4, [-10.8, 0.4], [-0.4, -110.8], [0.2, 0.4]],
-      ])
-    }
-    getMapExposure() {
-      return 1.9;
-    }
-    getColorful() {
-      return 13.8323;
-    }
-    getTexScale() {
-      return 1;
-    }
-    getFirstLevel() {
-      return 7;
-    }
-    getLastLevel() {
-      return 10;
-    }
-    getScreenInitVal() {
-      return 0.1;
-    }
-    getScreenInitScale() {
-      return 1.2;
-    }
-    getIterations() {
-      return 5;
-    }
-    getView() {
-      var e = 1,
-        t = 6.2 - 1 * e;
-      return [t, t, 0, 0];
-    }
-  })();
-}
-function createFlameConfig10() {
-  return new (class extends FlameConfig {
-    constructor() {
-      super([
-        [0.33, "linear", 1.3, [0.5, 0], [0, 0.5], [0.5, 0]],
-        [0.43, "heart", 1.1, [1, 0.5], [-0.5, 1], [0, -0.5]],
-        [0.43, "spherical", 0.4, [-1, -0.5], [0.5, -1], [1, 1]],
-      ])
-    }
-    getMapExposure() {
-      return 2.2289143;
-    }
-    getColorful() {
-      return 0.61129321418323;
-    }
-    getTexScale() {
-      return 1;
-    }
-    getFirstLevel() {
-      return 7;
-    }
-    getLastLevel() {
-      return 10;
-    }
-    getScreenInitVal() {
-      return 1;
-    }
-    getScreenInitScale() {
-      return 0.1;
-    }
-    getIterations() {
-      return 5;
-    }
-    getView() {
-      var e = 1,
-        t = 4.2 - 1 * e;
-      return [t, t, 0.3, -0.2];
-    }
-  })();
-}
-var s = 1.3;
-function createFlameConfig11() {
-  return new (class extends FlameConfig {
-    constructor() {
-      super([
-        [
-          0.3333,
-          "swirl",
-          1,
-          [-0.484358, 0.88212],
-          [0.124088, 0.484358],
-          [0, 0],
-        ],
-        [
-          0.3333,
-          "linear",
-          1,
-          [0.0438976, -0.498069],
-          [0.498069, 0.0438976],
-          [1.3, 0],
-        ],
-        [0.333, "linear", 1, [0.5, 0], [0, 0.5], [0.3 * s, -s]],
-      ])
-    }
-    getMapExposure() {
-      return 1.91;
-    }
-    getColorful() {
-      return -3.294;
-    }
-    getTexScale() {
-      return 0.179537;
-    }
-    getFirstLevel() {
-      return 10;
-    }
-    getLastLevel() {
-      return 11;
-    }
-    getScreenInitVal() {
-      return 1;
-    }
-    getScreenInitScale() {
-      return 2.23622;
-    }
-    getIterations() {
-      return 5;
-    }
-    getView() {
-      var e = 1,
-        t = 0.5 - 0.1 * e;
-      return [t, t, 0.3, -0.2];
-    }
-  })();
-}
-function createFlameConfig12() {
-  return new (class extends FlameConfig {
-    constructor() {
-      super([
-        [0.33, "hyperbolic", 0.4, [0.5, 0], [0, 0.5], [-0.566, 0.4]],
-        [0.33, "spherical", 0.4, [0.5, 0], [0, 0.5], [0.566, 0.4]],
-        [0.33, "spherical", 0.4, [0.5, 0], [0, 0.5], [0, -0.551]],
-      ])
-    }
-    getMapExposure() {
-      return 2.46727;
-    }
-    getColorful() {
-      return 0.579314;
-    }
-    getTexScale() {
-      return 0.75;
-    }
-    getFirstLevel() {
-      return 7;
-    }
-    getLastLevel() {
-      return 10;
-    }
-    getScreenInitVal() {
-      return 0.351317;
-    }
-    getScreenInitScale() {
-      return 66;
-    }
-    getIterations() {
-      return 4;
-    }
-    getView() {
-      var e = 1,
-        t = 2.2 - 0.2 * e;
-      return [t, t, 0.2, -0.2];
-    }
-  })();
-}
-function createFlameConfig13() {
-  return new (class extends FlameConfig {
-    constructor() {
-      super([
-        [0.28393, "spherical", 0.5, [0.5, 0], [0, 0.5], [-0.566, 0.4]],
-        [0.21053, "spherical", 0.5, [0.5, 0], [0, 0.5], [0.566, 0.4]],
-        [0.143482, "horseshoe", 0.9, [0.5, 0], [0, 0.5], [0, -0.551]],
-      ])
-    }
-    getMapExposure() {
-      return 5.16944;
-    }
-    getColorful() {
-      return 0.741352;
-    }
-    getTexScale() {
-      return 0.47984;
-    }
-    getFirstLevel() {
-      return 7;
-    }
-    getLastLevel() {
-      return 10;
-    }
-    getScreenInitVal() {
-      return 0.0325568;
-    }
-    getScreenInitScale() {
-      return 0.057675;
-    }
-    getIterations() {
-      return 5;
-    }
-    getView() {
-      var e = 1,
-        t = 1.2 - 0.1 * e;
-      return [t, t, 0, 0];
-    }
-  })();
-}
-function initAbsRotation(e) {
-  (e.origX = []), (e.origY = []), (e.angles = []);
-  var t;
-  for (t = 0; t < e.xf.length; t++)
-    e.origX.push(e.xf[t].getX()),
-      e.origY.push(e.xf[t].getY()),
-      e.angles.push(0);
-}
-function createFlameConfig14() {
-  return new (class extends FlameConfig {
-    constructor() {
-      super([
-        [0.333, "spherical", 0.4, [0.5, 0], [0, 0.5], [-0.566, 0.4]],
-        [0.333, "spherical", 0.4, [0.5, 0], [0, 0.5], [0.566, 0.4]],
-        [-0.00382, "horseshoe", 0.4, [0.5, 0], [0, 0.5], [0, -0.551]],
-      ])
-    }
-    getMapExposure() {
-      return 5.06021;
-    }
-    getColorful() {
-      return 0.213407;
-    }
-    getTexScale() {
-      return 0.908053;
-    }
-    getFirstLevel() {
-      return 7;
-    }
-    getLastLevel() {
-      return 10;
-    }
-    getScreenInitVal() {
-      return 0.0525668;
-    }
-    getScreenInitScale() {
-      return 0.107675;
-    }
-    getIterations() {
-      return 5;
-    }
-    getAnimRates() {
-      return this.animRate;
-    }
-    getView() {
-      var e = 1,
-        t = 3.2 - 0.5 * e;
-      return [t, t, 0, 0];
-    }
-  })();
-}
-function createFlameConfig15() {
-  return new (class extends FlameConfig {
-    constructor() {
-      super([
-        [0.333, "spherical", 0.4, [0.5, 0], [0, 0.5], [-0.566, 0.4]],
-        [0.333, "spherical", 0.4, [0.5, 0], [0, 0.5], [0.566, 0.4]],
-        [0.333, "swirl", 0.4, [0.5, 0], [0, 0.5], [0, -0.551]],
-      ])
-    }
-    getMapExposure() {
-      return 2.66021;
-    }
-    getColorful() {
-      return 0.283407;
-    }
-    getTexScale() {
-      return 0.858053;
-    }
-    getFirstLevel() {
-      return 7;
-    }
-    getLastLevel() {
-      return 10;
-    }
-    getScreenInitVal() {
-      return 0.04704;
-    }
-    getScreenInitScale() {
-      return 53.22;
-    }
-    getIterations() {
-      return 5;
-    }
-    getAnimRates() {
-      var e = 1;
-      return (this.animRate[2] = 3 * (e - 0.5)), this.animRate;
-    }
-    getView() {
-      var e = 1,
-        t = 2.2 - 0.3 * e;
-      return [t, t, 0, 0];
-    }
-  })();
-}
-*/
-function createFlameConfigX6() {
-  return new (class extends FlameConfig {
-    constructor() {
-      super([
-        [
-          0.35,
-          "linear",
-          0.7,
-          [0.361507, 0.1303464],
-          [-0.1303464, 0.361507],
-          [0.625, 0],
-        ],
-        [
-          0.85,
-          "linear",
-          0.9,
-          [0.08563109, 0.7551379],
-          [-0.7551379, 0.08563109],
-          [0, 0],
-        ],
-        [
-          0.35,
-          "linear",
-          1,
-          [0.5003027, 0.8662202],
-          [-0.8662202, 0.5003027],
-          [0, 0],
-        ],
-      ]);
-    }
-    getMapExposure() {
-      return 2.4;
-    }
-    getColorful() {
-      return 0.8323;
-    }
-    getTexScale() {
-      return 1;
-    }
-    getFirstLevel() {
-      return 7;
-    }
-    getLastLevel() {
-      return 10;
-    }
-    getScreenInitVal() {
-      return 2.4;
-    }
-    getScreenInitScale() {
-      return 0.09;
-    }
-    getIterations() {
-      return 4;
-    }
-    getView() {
-      var e = 1,
-        t = 1.5 - 0.25 * e;
-      return [t, t, 0, 0];
-    }
-  })();
-}
-makeTransforms = function (t) {
-  var r,
-    a = [];
-  for (r = 0; r < t.length; r++) {
-    var o = t[r];
-    a.push(new FlameTransform(o[0], o[1], o[2], o[3], o[4], o[5]));
+class TransformBuilder {
+  constructor() {
+    this._name = "linear"
+    this._weight = 0.5
+    this._wvar = 1
+    this._x = [0.5, 0.5]
+    this._y = [-1, .5]
+    this._o = [0, 0]
+    const self = this
+    variation_list.forEach((v) => {
+      const name = v.getName()
+      self[name] = () => {
+        self.name(name)
+        return self
+      }
+    })
   }
-  return a;
-};
+
+  name(n) {
+    this._name = n
+    return this
+  }
+
+  weight(w) {
+    this._weight = w
+    return this
+  }
+
+  wvar(w) {
+    this._wvar = w
+    return this
+  }
+
+  x(v) {
+    this._x = v
+    return this
+  }
+
+  y(v) {
+    this._y = v
+    return this
+  }
+
+  o(v) {
+    this._o = v
+    return this
+  }
+
+  build() {
+    return new FlameTransform(this._weight, this._name, this._wvar, this._x, this._y, this._o)
+  }
+}
+// TODO allow positionally passing default param overrides in constructor
+function transform() {
+  return new TransformBuilder()
+}
+function flame() {
+  return new FlameConfig()
+}
 class FlameConfig {
-  constructor(e) {
-    (this.xf = makeTransforms(e)),
+  constructor() {
+    (this.xf = []),
       (this.map_exposure = 1.8),
-      (this.colorful = 1.5),
+      (this._colorful = 1.5),
       (this.texscale = 0.8),
       (this.force_vertexonly = 0),
       (this.disc_compute = 50),
@@ -1517,50 +609,104 @@ class FlameConfig {
       (this.nlevel = 12),
       (this.screen_initval = 0.3),
       (this.screen_initscale = 0.2),
-      (this.iterations = 3),
-      (this.oldval = 0);
+      (this._iterations = 3),
+      (this._view = [5, 5, 0, 0])
+  }
+  addTransform(t) {
+    this.xf.push(t);
+    return this
   }
   getMapExposure() {
     return this.map_exposure;
   }
+  mapExposure(e) {
+    this.map_exposure = e;
+    return this;
+  }
   getColorful() {
-    return this.colorful;
+    return this._colorful;
+  }
+  colorful(c) {
+    this._colorful = c
+    return this;
   }
   getTexScale() {
     return this.texscale;
   }
+  texScale(t) {
+    this.texscale = t;
+    return this;
+  }
   getForceVertexOnly() {
     return this.force_vertexonly;
+  }
+  forceVertexOnly(f) {
+    this.force_vertexonly = f;
+    return this;
   }
   getDiscCompute() {
     return this.disc_compute;
   }
+  discCompute(d) {
+    this.disc_compute = d;
+    return this;
+  }
   getFirstLevel() {
     return this.firstlevel;
+  }
+  firstLevel(l) {
+    this.firstlevel = l;
+    return this;
   }
   getLastLevel() {
     return this.lastlevel;
   }
+  lastLevel(l) {
+    this.lastlevel = l;
+    return this;
+  }
   getNLevel() {
     return this.nlevel;
+  }
+  nLevel(l) {
+    this.nlevel = l;
+    return this;
   }
   getScreenInitVal() {
     return this.screen_initval;
   }
+  screenInitVal(v) {
+    this.screen_initval = v;
+    return this;
+  }
   getScreenInitScale() {
     return this.screen_initscale;
   }
+  screenInitScale(s) {
+    this.screen_initscale = s;
+    return this;
+  }
   getIterations() {
-    return this.iterations;
+    return this._iterations;
+  }
+  iterations(i) {
+    this._iterations = i;
+    return this;
   }
   getFlameTransforms() {
     return this.xf;
   }
   getView() {
-    return [5, 5, 0, 0];
+    return this._view;
   }
-  getAnimRates() {
-    return defaultAnimRates;
+  view(v) {
+    this._view = v;
+    return this;
+  }
+
+  setTime(t) {
+    this.time = t
+    this.xf.forEach((x) => x.setTime(t))
   }
 }
 class FrameMgr {
@@ -1998,7 +1144,8 @@ class Furnace {
       opengl.uScalef(2, 2, 1),
       opengl.uTranslatef(-0.5, -0.5, 0);
   }
-  ignite() {
+  ignite(t) {
+    this.config.setTime(t)
     this.setupLegacyShaderProg();
     var e = new FrameMgr(0, null),
       t = this.getFrameBuffer();
@@ -2083,7 +1230,11 @@ class Engine {
     return this.currentConfig
   }
   render() {
-    this.drawScene(window.innerWidth, window.innerHeight)
+    if (!this.startTime) {
+      this.startTime = performance.now()
+    }
+    const time = (performance.now() - this.startTime) / 1000
+    this.drawScene(window.innerWidth, window.innerHeight, time)
     window.requestAnimationFrame(this.render.bind(this));
   }
   getPostprocessShader() {
@@ -2111,10 +1262,10 @@ class Engine {
       this.postprocessProg
     );
   }
-  drawScene(e, t) {
-    var a = this.furnace.ignite();
+  drawScene(w, h, t) {
+    var a = this.furnace.ignite(t);
     gl.bindTexture(gl.TEXTURE_2D, a),
-      gl.viewport(0, 0, e, t),
+      gl.viewport(0, 0, w, h),
       gl.enable(gl.DEPTH_TEST),
       gl.disable(gl.BLEND),
       gl.clearColor(0.3, 0.5, 0.7, 0),

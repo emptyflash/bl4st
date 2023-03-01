@@ -13,9 +13,47 @@
     <!-- <script src="bl4st.js"></script> -->
     <script>
     const engine = new Engine()
-    const conf = createFlameConfigX6()
     engine.init(),
-    engine.setConfig(conf)
+    engine.setConfig(
+      flame()
+        .addTransform(
+          transform()
+          .linear()
+          .weight(0.35)
+          .wvar(0.7)
+          .x(({time}) => [Math.sin(time)+1, Math.cos(time)+1])
+          .y([-0.1303464, 0.361507])
+          .o([0.625, 0])
+          .build()
+        )
+        .addTransform(
+          transform()
+          .linear()
+          .weight(0.35)
+          .wvar(1)
+          .x([0.5003027, 0.8662202])
+          .y([-0.8662202, 0.5003027])
+          .build()
+        )
+        .addTransform(
+          transform()
+          .linear()
+          .weight(0.85)
+          .wvar(0.9)
+          .x([0.08563109, 0.7551379])
+          .y([-0.7551379, 0.08563109])
+          .build()
+        )
+        .mapExposure(2.4)
+        .colorful(0.8323)
+        .texScale(1)
+        .firstLevel(7)
+        .lastLevel(10)
+        .screenInitVal(2.4)
+        .screenInitScale(0.09)
+        .iterations(4)
+        .view([.75, .75, 0, 0])
+    )
     engine.render()
     </script>
 </html
