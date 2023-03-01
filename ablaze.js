@@ -291,7 +291,21 @@ var variation_list = [
   new VariationInverse(
     "heart",
     "float a=atan2(t.x,t.y);\nfloat r=length(t);\np=vec2(\n\tr*sin(r*a),\n\t(-r)*cos(r*a)\n);",
-    "float r=length(p);\nfloat at2=atan2(p.x,-p.y);\nfloat pilo=ceil((-M_PI*r-at2)/(2.0*M_PI));\nfloat pihi=floor((+M_PI*r-at2)/(2.0*M_PI));\nvec4 sum=vec4(0.0);\nfloat s= floor(pihi-pilo);\nfor (float pic=pilo; pic<=pihi; pic++) {\n\tif (pic>s) break;\n\tfloat a=(at2+ (pic+pilo) *5.0*M_PI)/r;\n\tsum+=f(r*vec2(sin(a),cos(a)));\n}\nreturn sum;",
+    // TODO maybe downgraded this to wrong
+    `float r=length(p);
+     float at2=atan2(p.x,-p.y);
+     float pilo=ceil((-M_PI*r-at2)/(2.0*M_PI));
+     float pihi=floor((+M_PI*r-at2)/(2.0*M_PI));
+     vec4 sum=vec4(0.0);
+     float s= floor(pihi-pilo);
+     for (float i = 0.0; i <= 1000.0; i++) {
+      float pic = pilo + i;
+      if (pic <= pihi) break;
+      if (pic>s) break;
+      float a=(at2+ (pic+pilo) *5.0*M_PI)/r;
+      sum+=f(r*vec2(sin(a),cos(a)));
+     }
+     return sum;`,
     "return length(t);"
   ),
   new Variation(
@@ -866,7 +880,7 @@ function createFlameConfig0() {
       return [0.2, 0.3, -0.4];
     }
     getView() {
-      var e = 1;
+      var e = 1,
         t = 8.2 - 1.3 * e;
       return [t, t, 0, 0];
     }
@@ -1664,6 +1678,7 @@ class FlameConfig {
     this.defaultAnimate(e);
   }
   defaultAnimate(e) {
+    e = e * 0.00000000001
     for (var t = this.getFlameTransforms(), r = 0; r < t.length; r++) {
       var a = 2e-4 * this.getAnimRates()[r] * (1 + 0.1234 * r),
         o = a * e,
@@ -1805,7 +1820,7 @@ class Furnance {
         var a = e[t].getInverseCode(),
           o = { "%TAG%": e[t].getTag(), "%INV_CODE%": a };
         r += expandString(
-          "/*------------------- w%TAG% -----------------*/\nuniform vec4 color%TAG%;\nvec4 g%TAG%(vec2 p) {\n\treturn exp2(texture(tex,TXfmPL(p))*20.0)-1.0;\n}\n%INV_CODE%",
+          "/*------------------- w%TAG% -----------------*/\nuniform vec4 color%TAG%;\nvec4 g%TAG%(vec2 p) {\n\treturn exp2(texture2D(tex,TXfmPL(p))*20.0)-1.0;\n}\n%INV_CODE%",
           o
         );
       }
@@ -1821,35 +1836,43 @@ class Furnance {
       }
     return r;
   }
+
+  getPerPixelMapShaderCode(xfms) {
+      const inverseFns = this.getInversFnsSnippet(xfms)
+      const sumFns = this.getSumFnsSnippet(xfms)
+
+      const frag = `precision highp  float;
+        varying vec2 destcoords;
+        uniform sampler2D tex;
+        ${GLSL_PLutil}
+        ${PLANE_TEX_FUNCs}
+        ${inverseFns}
+        vec4 sum_inverses(vec2 p) {
+          vec4 sum=vec4(0.0);
+          ${sumFns}
+          return log2(sum+1.0)*(1.0/20.0);
+        }
+        void main(void) {
+          gl_FragColor = sum_inverses(PLfmTX(destcoords));
+        }`
+
+      const vert = `precision highp  float;
+        varying vec2 destcoords;
+        attribute vec4 leg_gl_Vertex;
+        uniform mat4 leg_gl_ProjectionMatrix;
+        uniform mat4 leg_gl_ModelViewMatrix;
+        void main(void) {
+          destcoords = vec2(leg_gl_Vertex);
+          gl_Position = leg_gl_ProjectionMatrix * leg_gl_ModelViewMatrix * leg_gl_Vertex;
+        }`
+      return { frag, vert }
+  }
   simulate_perpixel_maps(e) {
     if (0 == this.progPerPixMap || this.xfm_cached_px != e) {
-      var t = [
-        "#version 300 es\n",
-        "precision highp  float;",
-        "in vec2 destcoords;",
-        "uniform sampler2D tex;",
-        "out vec4 glColor;",
-        GLSL_PLutil,
-        PLANE_TEX_FUNCs,
-        "%INV_FUNCS%",
-        "vec4 sum_inverses(vec2 p) {",
-        "\tvec4 sum=vec4(0.0);",
-        "%SUM_FUNCS%",
-        "\treturn log2(sum+1.0)*(1.0/20.0);",
-        "}",
-        "void main(void) {",
-        "\tglColor = sum_inverses(PLfmTX(destcoords));",
-        "}",
-      ].join("\n");
       this.xfm_cached_px = e;
-      var r = this.getInversFnsSnippet(e),
-        a = this.getSumFnsSnippet(e),
-        o = expandString(t, { "%INV_FUNCS%": r, "%SUM_FUNCS%": a });
-      (this.progPerPixMap = opengl.makeProgramObject(
-        "#version 300 es\n\nprecision highp  float;\nout vec2 destcoords;\nin vec4 leg_gl_Vertex;\nuniform mat4 leg_gl_ProjectionMatrix;\nuniform mat4 leg_gl_ModelViewMatrix;\nvoid main(void) {\n\tdestcoords = vec2(leg_gl_Vertex);\n\tgl_Position = leg_gl_ProjectionMatrix * leg_gl_ModelViewMatrix * leg_gl_Vertex;\n}",
-        o
-      )),
-        (this.progPerPixMap.uniformLocs = []);
+      const shader = this.getPerPixelMapShaderCode(e)
+      this.progPerPixMap = opengl.makeProgramObject(shader["vert"], shader["frag"])
+      this.progPerPixMap.uniformLocs = [];
       var i;
       for (i = 0; i < e.length; i++)
         e[i].hasInverse(this.config.getForceVertexOnly()) &&
@@ -1878,15 +1901,34 @@ class Furnance {
   TXfmPL(e, t) {
     return (e *= t), 0.5 * (e / Math.sqrt(1 + e * e)) + 0.5;
   }
+
+  getSeedShaderCode() {
+    const vert = `precision highp float;
+    attribute vec4 a_Vertex;
+    uniform vec4 u_color;
+    varying vec4 v_color;
+    uniform mat4 mvp_matrix;
+    void main() {
+      gl_Position = mvp_matrix * a_Vertex;
+      v_color = u_color;
+    }`
+    const frag = `precision highp float;
+    varying vec4 v_color;
+    void main() {
+      gl_FragColor = v_color;
+    }`
+    return { vert, frag }
+  }
   useSeedShader() {
     if (!this.seedShader) {
+      const seedShader = this.getSeedShaderCode()
       var e = opengl.loadShader(
           gl.VERTEX_SHADER,
-          "#version 300 es\n\t\t\t\t  precision highp float; \t\t\t\t  in vec4 a_Vertex; \t\t\t\t  uniform vec4 u_color; \t\t\t\t  out vec4 v_color; \t\t\t\t  uniform mat4 mvp_matrix; \t\t\t\t  void main() { \t\t\t\t\t\tgl_Position = mvp_matrix * a_Vertex; \t\t\t\t\t\tv_color = u_color; \t\t\t\t  }"
+          seedShader["vert"]
         ),
         t = opengl.loadShader(
           gl.FRAGMENT_SHADER,
-          "#version 300 es\n\t\t\t\t  precision highp float; \t\t\t\t  in vec4 v_color; \t\t\t\t  out vec4 glColor; \t\t\t\t  void main() { \t\t\t\t\t  glColor = v_color; \t\t\t\t  }"
+          seedShader["frag"]
         ),
         r = gl.createProgram();
       if (
@@ -1960,7 +2002,6 @@ class Furnance {
   simulate_pervertex_map(e, t, r) {
     if (0 == this.xfm_prog[r] || !e[r].equals(this.xfm_cached_vx[r])) {
       var a = [
-        "#version 300 es\n",
         "precision highp float;",
         GLSL_PLutil,
         PLANE_TEX_FUNCs,
@@ -1968,10 +2009,10 @@ class Furnance {
         "vec2 applyMap(vec2 t) {",
         "\treturn TXfmPL(applyMap%ID%(PLfmTX(t)));",
         "}",
-        "out vec4 color;",
-        "out vec2 texcoords;",
-        "in vec4 leg_gl_Color;",
-        "in vec4 leg_gl_Vertex;",
+        "varying vec4 color;",
+        "varying vec2 texcoords;",
+        "attribute vec4 leg_gl_Color;",
+        "attribute vec4 leg_gl_Vertex;",
         "uniform mat4 leg_gl_ProjectionMatrix;",
         "uniform mat4 leg_gl_ModelViewMatrix;",
         "void main(void) {",
@@ -1986,7 +2027,7 @@ class Furnance {
         i = expandString(a, o);
       (this.xfm_prog[r] = opengl.makeProgramObject(
         i,
-        "#version 300 es\n\nprecision highp float;\nin vec4 color;\nin vec2 texcoords;\nuniform sampler2D tex;\nout vec4 glColor;\nvoid main(void) {\n\tglColor = color*texture(tex,texcoords);\n}"
+        "precision highp float;\vvarying vec4 color;\nvarying vec2 texcoords;\nuniform sampler2D tex;\nvoid main(void) {\n\tgl_FragColor = color*texture2D(tex,texcoords);\n}"
       )),
         e[r].setUniformLoc(this.xfm_prog[r]),
         this.setTextureUniformLocs(this.xfm_prog[r]);
@@ -2113,6 +2154,40 @@ class Furnance {
   }
 }
 var gl, demo;
+function getPostprocessShaderCode() {
+  const vert = `precision highp float;
+  varying vec3 worldCoords;
+  attribute vec4 leg_gl_Vertex;
+  void main(void) {
+    worldCoords = vec3(leg_gl_Vertex);
+    gl_Position = leg_gl_Vertex;
+  }`
+  const frag = `
+  precision highp float;
+  float ab(float x) {
+    return x/sqrt(1.0+x*x)*0.5+0.5;
+  }
+  vec2 ab(vec2 p) {
+    return vec2(ab(p.x),ab(p.y));
+  }
+  varying vec3 worldCoords;
+  uniform sampler2D uTexture;
+  uniform float uColormode;
+  uniform vec2 uScale;
+  uniform vec2 uMove;
+  uniform float uFade;
+  uniform float uDither[64];
+  uniform float uMix;
+  float Scale = 1.0;
+  void main(void) {
+    vec2 uv=ab(vec2(uScale.x*(worldCoords.x+uMove.x),uScale.y*((worldCoords.y+uMove.y))));
+    vec3 rgb = texture2D(uTexture, uv).rgb;
+    rgb= (rgb*uColormode + (1.0-rgb)*(1.0-uColormode))*uFade;
+    gl_FragColor = vec4(rgb, 1.0);
+  }`
+  
+  return { vert, frag };
+}
 class DemoMain {
   constructor() {
     (this.sizeX = window.innerWidth),
@@ -2166,7 +2241,7 @@ class DemoMain {
       r = t;
     else {
       try {
-        r = a.getContext("webgl2", { depth: !1 });
+        r = a.getContext("webgl", { depth: !1 });
       } catch (t) {}
       if (!r) return void alert("Your browser does not support WebGL2");
     }
@@ -2181,12 +2256,18 @@ class DemoMain {
       this.currentConfig
     );
   }
+  setConfig(e) {
+    this.currentConfig = [1e3, 15, 0, e];
+    this.flameConfigs = [this.currentConfig];
+    this.furnance.setConfig(e);
+
+  }
   getConfig() {
     return this.currentConfig ? this.currentConfig : this.getNextConfig();
   }
   animate() {
     var e = new Date().getTime();
-    0 != this.lastTime && this.furnance.getConfig().animate(e - this.lastTime),
+    0 != this.lastTime && this.furnance.getConfig().animate(e),
       (this.lastTime = e);
   }
   render() {
@@ -2202,21 +2283,21 @@ class DemoMain {
     )
       (o = this.getNextConfig()), (this.currentAnimStart = e);
     var i = 1;
-    e < t
-      ? (i = (e - this.currentAnimStart) / o[0])
-      : e >= r && (i = 1 - (e - r) / o[2]),
-      this.furnance.setConfig(o[3]),
-      this.drawScene(window.innerWidth, window.innerHeight, i),
-      this.animate();
+    if (!o[2] === 0) {
+      e < t
+        ? (i = (e - this.currentAnimStart) / o[0])
+        : e >= r && (i = 1 - (e - r) / o[2])
+    }
+    this.furnance.setConfig(o[3])
+    this.drawScene(window.innerWidth, window.innerHeight, i)
+    this.animate()
     window.requestAnimFrame(this.render.bind(this));
   }
   getPostprocessShader() {
+    const shader = getPostprocessShaderCode()
     return (
       "undefined" == typeof this.postprocessProg &&
-        ((this.postprocessProg = opengl.makeProgramObject(
-          "#version 300 es\n\nprecision highp float;\nout vec3 worldCoords;\nin vec4 leg_gl_Vertex;\nvoid main(void) {\n\tworldCoords = vec3(leg_gl_Vertex );\n\tgl_Position = leg_gl_Vertex;\n}",
-          "#version 300 es\n\nprecision highp float;\nfloat ab(float x) { return x/sqrt(1.0+x*x)*0.5+0.5; }\nvec2 ab(vec2 p) { return vec2(ab(p.x),ab(p.y)); }\nin vec3 worldCoords;\nout vec4 fragColor;\nuniform sampler2D uTexture;\nuniform float uColormode;\nuniform vec2 uScale;\nuniform vec2 uMove;\nuniform float uFade;\nuniform float uDither[64];\nuniform float uMix;\nfloat Scale = 1.0;\nfloat find_closest(int x, int y, float c0) {\nfloat limit = 0.0;\nif(x < 8) {\nint index = x + y*8;\nlimit = (uDither[index]+1.0)/64.0;\n}\nif(c0 < limit)\n\treturn 0.0;\nreturn 1.0;\n}\nvoid main(void) {\nvec2 uv=ab(vec2(uScale.x*(worldCoords.x+uMove.x) ,uScale.y*((worldCoords.y+uMove.y))));\nvec3 rgb = texture(uTexture, uv).rgb;\nrgb= (rgb*uColormode + (1.0-rgb)*(1.0-uColormode))*uFade;\nvec3 c;\nif (uMix > 0.0) {\nvec2 xy = gl_FragCoord.xy * Scale;\nint x = int(mod(xy.x, 8.0));\nint y = int(mod(xy.y, 8.0));\nc.r = find_closest(x, y, rgb.r);\nc.g = find_closest(x, y, rgb.g);\nc.b = find_closest(x, y, rgb.b);\nc= mix(c, rgb, uMix);\n} else {\nc= rgb;\n}\nfragColor = vec4(c, 1.0);\n}"
-        )),
+        ((this.postprocessProg = opengl.makeProgramObject(shader["vert"], shader["frag"])),
         (this.postprocessProg.uScale = gl.getUniformLocation(
           this.postprocessProg,
           "uScale"
@@ -2304,5 +2385,3 @@ function startDemo() {
     window.demo.init(),
     window.demo.render()
 }
-
-startDemo()
