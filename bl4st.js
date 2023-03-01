@@ -1,202 +1,173 @@
-var regl = createREGL({
-  optionalExtensions: [
-    "ext_texture_filter_anisotropic",
-  ]
-})
+// basicSetup imports
+import {keymap, highlightSpecialChars, drawSelection, highlightActiveLine, dropCursor,
+        rectangularSelection, crosshairCursor,
+        lineNumbers, highlightActiveLineGutter} from "@codemirror/view"
+import {EditorState} from "@codemirror/state"
+import {defaultHighlightStyle, syntaxHighlighting, indentOnInput, bracketMatching,
+        foldGutter, foldKeymap} from "@codemirror/language"
+import {defaultKeymap, history, historyKeymap} from "@codemirror/commands"
+import {searchKeymap, highlightSelectionMatches} from "@codemirror/search"
+import {autocompletion, completionKeymap} from "@codemirror/autocomplete"
+import {lintKeymap} from "@codemirror/lint"
 
-const height = window.innerHeight;
-const width = window.innerWidth;
+// Actual imports
+import {EditorView} from "@codemirror/view"
+import {indentWithTab} from "@codemirror/commands"
+import {javascript} from "@codemirror/lang-javascript"
+import { nord } from 'cm6-theme-nord'
+import { vim, Vim, getCM } from "@replit/codemirror-vim"
+import { linter } from "@codemirror/lint";
 
-const config = createFlameConfigX6();
-const furnance = new Furnance(regl._gl)
-furnance.setConfig(config)
+const engine = new Engine()
+engine.init()
 
-const seedShader = furnance.getSeedShaderCode()
+let errors = [];
+function errorLint(view) {
+  return errors.map(error => {
+    return {
+      from: 0,
+      to: view.state.doc.length,
+      severity: "error",
+      message: error.toString(),
+    }
+  });
+}
 
-const texScale = config.getTexScale();
-const screenInitScale = config.getScreenInitScale()
-const screenInitVal = config.getScreenInitVal()
-const texCoord = screenInitScale * (furnance.TXfmPL(1, texScale) - furnance.TXfmPL(0, texScale))
-const vertices = regl.buffer([
-  0, 0, 0, 0,
-  texCoord, 0, texCoord, 0,
-  0, texCoord, texCoord, 0,
-])
-const matrix = [ // TODO does it matter if this is hardcoded
-  2, 0, 0, 0,
-  0, 2, 0, 0,
-  0, 0, 0.009999999776482582, 0,
-  0, 0, 0, 1,
+function evalCode(code, view) {
+  try {
+      const config = eval(code);
+      engine.setConfig(config)
+  } catch (err) {
+    errors = [err];
+    console.error(err);
+    // trigger review of the error
+    view?.setState(view?.state);
+    return true;
+  }
+  params.set("c", code);
+  window.history.pushState({}, '', `${location.pathname}?${params.toString()}`);
+  errors = [];
+  // trigger review to clear errors
+  view?.setState(view?.state);
+  return true;
+}
+
+const params = new URLSearchParams(location.search);
+let defaultCode = `flame()
+  .addTransform(
+    transform()
+    .linear()
+    .weight(0.35)
+    .wvar(0.7)
+    .x(({time}) => [Math.sin(time)+1, Math.cos(time)+1])
+    .y([-0.1303464, 0.361507])
+    .o([0.625, 0])
+    .build()
+  )
+  .addTransform(
+    transform()
+    .linear()
+    .weight(0.35)
+    .wvar(1)
+    .x([0.5003027, 0.8662202])
+    .y([-0.8662202, 0.5003027])
+    .build()
+  )
+  .addTransform(
+    transform()
+    .linear()
+    .weight(0.85)
+    .wvar(0.9)
+    .x([0.08563109, 0.7551379])
+    .y([-0.7551379, 0.08563109])
+    .build()
+  )
+  .mapExposure(2.4)
+  .colorful(0.8323)
+  .texScale(1)
+  .firstLevel(7)
+  .lastLevel(10)
+  .screenInitVal(2.4)
+  .screenInitScale(0.09)
+  .iterations(3)
+  .view([.8, .8, 0, 0])
+`
+if (params.get("c")) {
+  defaultCode = params.get("c");
+}
+let vimExtension = [];
+if (params.get("v") !== null) {
+  vimExtension = [vim()];
+}
+
+export const basicSetup = [
+  lineNumbers(),
+  highlightActiveLineGutter(),
+  highlightSpecialChars(),
+  history(),
+  foldGutter(),
+  drawSelection(),
+  dropCursor(),
+  EditorState.allowMultipleSelections.of(true),
+  indentOnInput(),
+  syntaxHighlighting(defaultHighlightStyle, {fallback: true}),
+  bracketMatching(),
+  autocompletion(),
+  rectangularSelection(),
+  crosshairCursor(),
+  highlightActiveLine(),
+  highlightSelectionMatches(),
+  keymap.of([
+    ...defaultKeymap,
+    ...searchKeymap,
+    ...historyKeymap,
+    ...foldKeymap,
+    ...completionKeymap,
+    ...lintKeymap
+  ])
 ]
-const color = [screenInitVal, screenInitVal, screenInitVal, 1]
 
-const drawSeedTexture = regl({
-  vert: seedShader["vert"],
-  frag: seedShader["frag"],
-  attributes: {
-    a_Vertex: {
-      buffer: vertices,
-      size: 3,
-    }
-  },
-  uniforms: {
-    u_color: color,
-    mvp_matrix: matrix,
-  },
-  primitive: "triangle strip",
-  count: 4,
-  depth: {
-    enable: false
-  },
-  blend: {
-    enable: true,
-    color: [0, 0, 0, 0],
-    func: {
-      dstAlpha: 1,
-      dstRGB: 1,
-      srcAlpha: 1,
-      srcRGB: 1,
-    },
-    equation: {
-      alpha: "add",
-      rgb: "add",
-    }
-  }
-})
-
-
-const perPixelMapShader = furnance.getPerPixelMapShaderCode(config.getFlameTransforms())
-function mapColor(config, o) {
-  var i = 1,
-    n = 1,
-    l = 1,
-    s = config.getColorful();
-  const xfms = config.getFlameTransforms()
-  switch (o % 3) {
-    case 0:
-      i -= s;
-      break;
-    case 1:
-      n -= s;
-      break;
-    case 2:
-      l -= s;
-  }
-  var c = config.getMapExposure();
-  if (0 > c) {
-    var f;
-    (f = i), (i = n), (n = f), (f = l), (l = n), (n = f);
-  }
-  var u = Math.abs(c) * xfms[o].getWeight();
-  return new Float32Array([u * i, u * n, u * l, 1]);
-}
-function buildPerPixelUniforms(config) {
-  const uniforms = {};
-  const xfms = config.getFlameTransforms()
-  for (let i = 0; i < xfms.length; i++) {
-    const xfm = xfms[i]
-    const xfUniform = []
-    xfm.getXfUniforms(xfUniform)
-    xfUniform.forEach((v, k) => {
-      uniforms[`xf${xfm.getTag()}[${k}]`] = v
-    })
-    uniforms[`color${xfm.getTag()}`] = mapColor(config, i)
-  }
-  return uniforms;
-}
-const drawPerPixelMaps = regl({
-  vert: perPixelMapShader["vert"],
-  frag: perPixelMapShader["frag"],
-  uniforms: {
-    tex: regl.prop("texture"),
-    texscale: config.getTexScale(),
-    texscalei: 1/config.getTexScale(),
-    leg_gl_ModelViewMatrix: [
-      1, 0, 0, 0,
-      0, 1, 0, 0,
-      0, 0, 1, 0,
-      0, 0, 0, 1,
-    ],
-    leg_gl_ProjectionMatrix: [
-      1, 0, 0, 0,
-      0, 1, 0, 0,
-      0, 0, 1, 0,
-      0, 0, 0, 1,
-    ],
-    ...buildPerPixelUniforms(config),
-  },
-  attributes: {
-    leg_gl_Vertex: {
-      buffer: [
-        -1, -1, 0.5, -1,
-        1, 0.5, 1, -1,
-        0.5, 1, 1, 0.5
-      ],
-      size: 3,
-    }
-  },
-  primitive: "triangle strip",
-  count: 4,
-  depth: {
-    enable: false
-  },
-  blend: {
-    enable: false,
-    color: [0, 0, 0, 0],
-    func: {
-      dstAlpha: 1,
-      dstRGB: 1,
-      srcAlpha: 1,
-      srcRGB: 1,
-    },
-    equation: {
-      alpha: "add",
-      rgb: "add",
-    }
-  }
-})
-
-function getTextureLevels(config) {
-  const endLevel = config.getNLevel();
-  const textureLevels = Array(endLevel+1).fill(0).map(_ => []);
-  for (let i = 0; i <= endLevel; i++) {
-    const size = 1 << i
-    for (let j = 0; j < 2; j++) {
-      textureLevels[i][j] = regl.framebuffer({
-        color: regl.texture({
-          width: size,
-          height: size,
-          mag: "linear",
-          min: "mipmap",
-          wrap: ["repeat", "repeat"],
-          anisotropic: 16, // TODO seems like this isn't getting set
-          depthStencil: false
-        })
-      })
-    }
-  }
-  return textureLevels;
-}
-const textureLevels = getTextureLevels(config)
-
-regl.frame(function ({tick}) {
-    for (let l = config.getFirstLevel(); l <= config.getLastLevel(); l++) {
-      for (let i = 0; i < config.getIterations(); i++) {
-        textureLevels[l][i%2].use(() => {
-          if (i === 0 ) {
-            if (l === config.getFirstLevel()) {
-              regl.clear({
-                  color: [0, 0, 0, 1]
-              })
-              drawSeedTexture()
-            } else {
-              drawPerPixelMaps({ texture: textureLevels[l-1][1] })
-            }
-          } else {
-            drawPerPixelMaps({ texture: textureLevels[l][(i+1)%2] })
-          }
-        })
+const editorDiv = document.getElementById("editor")
+const runCode = (view) => evalCode(view.state.doc.toString(), view)
+const editor = new EditorView({
+  doc: defaultCode,
+  extensions: [
+    keymap.of([{
+      key: "Ctrl-Enter",
+      run: runCode,
+    },{
+      key: "Cmd-Enter",
+      run: runCode
+    },{
+      key: "Ctrl-e",
+      run: (view) => {
+        let cm = getCM(view);
+        Vim.exitInsertMode(cm);
+        return true;
       }
-    }
-    drawPerPixelMaps({ texture: textureLevels[config.getLastLevel()][0] })
-})
+    }]),
+    keymap.of(defaultKeymap),
+    keymap.of([indentWithTab]),
+    javascript(),
+    basicSetup,
+    EditorView.lineWrapping,
+    nord,
+    linter(errorLint),
+  ].concat(vimExtension),
+  parent: editorDiv,
+});
+
+setTimeout(() => {
+    evalCode(defaultCode, editor)
+    engine.render()
+}, 10);
+
+function runButtonFn() {
+  evalCode(editor.state.doc.toString(), editor);
+}
+const runButton = document.getElementById("runButton");
+runButton.onclick = runButtonFn
+
+Vim.defineEx('write', 'w', function() {
+  evalCode(editor.state.doc.toString(), editor);
+});

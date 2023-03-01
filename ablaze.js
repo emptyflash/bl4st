@@ -1210,7 +1210,7 @@ class Engine {
       (this.oldval = 0);
   }
   init() {
-    (window.gl = this.initGl(document.getElementById("canvas2"), null)),
+    (window.gl = this.initGl(document.getElementById("canvas"), null)),
       (window.opengl = new OpenGL()),
       (this.furnace = new Furnace(gl));
   }

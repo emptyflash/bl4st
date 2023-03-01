@@ -1,0 +1,35 @@
+{
+  "name": "bl4st",
+  "version": "1.0.0",
+  "description": "",
+  "main": "bl4st.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "bundle": "rollup -c",
+    "watch": "rollup -c -w"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emptyflash/bitfolly.git"
+  },
+  "author": "emptyflash",
+  "license": "CC BY-NC-SA",
+  "bugs": {
+    "url": "https://github.com/emptyflash/bl4st/issues"
+  },
+  "homepage": "https://emptyfla.sh/bl4st",
+  "dependencies": {
+    "@codemirror/lang-javascript": "^6.1.1",
+    "@replit/codemirror-vim": "^6.0.3",
+    "cm6-theme-nord": "^0.2.0",
+    "codemirror": "^6.0.1"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^23.0.3",
+    "@rollup/plugin-json": "^5.0.2",
+    "@rollup/plugin-node-resolve": "^15.0.1",
+    "rollup": "^3.5.1",
+    "rollup-plugin-livereload": "^2.0.5",
+    "rollup-plugin-serve": "^2.0.2"
+  }
+}
