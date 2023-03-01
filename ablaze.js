@@ -501,13 +501,7 @@ class FlameTransform extends Variation {
     return t;
   }
 }
-function smooth(e, t, r) {
-  t.push(e), t.length > r && t.shift();
-  var a,
-    o = 0;
-  for (a = 0; a < t.length; a++) o += t[a];
-  return o / t.length;
-}
+/*
 function createFlameConfigX1() {
   return new (class extends FlameConfig {
     constructor() {
@@ -555,9 +549,6 @@ function createFlameConfigX1() {
     }
     getIterations() {
       return 5;
-    }
-    animate(e) {
-      this.defaultAnimate(e);
     }
     getView() {
       var e = 1,
@@ -607,9 +598,6 @@ function createFlameConfigX2() {
     getIterations() {
       return 5;
     }
-    animate(e) {
-      this.defaultAnimate(e);
-    }
     getView() {
       var e = 1,
         t = 0.7 - 0.15 * e;
@@ -651,9 +639,6 @@ function createFlameConfigX3() {
     getIterations() {
       return 5;
     }
-    animate(e) {
-      this.defaultAnimate(e);
-    }
     getView() {
       var e = 1,
         t = 2.2 - 0.5 * e;
@@ -691,9 +676,6 @@ function createFlameConfigX4() {
     }
     getScreenInitScale() {
       return 0.122;
-    }
-    animate(e) {
-      this.defaultAnimate(e);
     }
     getView() {
       var e = 1,
@@ -735,77 +717,10 @@ function createFlameConfigX5() {
     getIterations() {
       return 2;
     }
-    animate(e) {
-      this.defaultAnimate(e);
-    }
     getView() {
       var e = 1,
         t = 0.8 - 0.1 * e;
       return [t, t, 0.25, -0.25];
-    }
-  })();
-}
-function createFlameConfigX6() {
-  return new (class extends FlameConfig {
-    constructor() {
-      super([
-        [
-          0.35,
-          "linear",
-          0.7,
-          [0.361507, 0.1303464],
-          [-0.1303464, 0.361507],
-          [0.625, 0],
-        ],
-        [
-          0.85,
-          "linear",
-          0.9,
-          [0.08563109, 0.7551379],
-          [-0.7551379, 0.08563109],
-          [0, 0],
-        ],
-        [
-          0.35,
-          "linear",
-          1,
-          [0.5003027, 0.8662202],
-          [-0.8662202, 0.5003027],
-          [0, 0],
-        ],
-      ]);
-    }
-    getMapExposure() {
-      return 2.4;
-    }
-    getColorful() {
-      return 0.8323;
-    }
-    getTexScale() {
-      return 1;
-    }
-    getFirstLevel() {
-      return 7;
-    }
-    getLastLevel() {
-      return 10;
-    }
-    getScreenInitVal() {
-      return 2.4;
-    }
-    getScreenInitScale() {
-      return 0.09;
-    }
-    getIterations() {
-      return 4;
-    }
-    animate(e) {
-      this.defaultAnimate(e);
-    }
-    getView() {
-      var e = 1,
-        t = 1.5 - 0.25 * e;
-      return [t, t, 0, 0];
     }
   })();
 }
@@ -833,9 +748,6 @@ function createFlameConfigX() {
     }
     getIterations() {
       return 5;
-    }
-    animate(e) {
-      this.defaultAnimate(e);
     }
     getView() {
       var e = 1,
@@ -872,9 +784,6 @@ function createFlameConfig0() {
     }
     getScreenInitVal() {
       return 0.9;
-    }
-    animate(e) {
-      skipAnimate(this, e, 120);
     }
     getAnimRates() {
       return [0.2, 0.3, -0.4];
@@ -916,9 +825,6 @@ function createFlameConfig1() {
     getTexScale() {
       return 4;
     }
-    animate(e) {
-      this.defaultAnimate(e);
-    }
     getView() {
       var e = 1,
         t = 7.2 - 0.75 * e;
@@ -946,8 +852,7 @@ function createFlameConfig2() {
           [0.571187, 0.322248],
           [-0.871327, 0.469188],
         ],
-      ]),
-        (this.animRate = [3, 5]);
+      ])
     }
     getMapExposure() {
       return 1.9096749;
@@ -973,9 +878,6 @@ function createFlameConfig2() {
     }
     getIterations() {
       return 3;
-    }
-    getAnimRates() {
-      return this.animRate;
     }
     getView() {
       var e = 1,
@@ -1057,8 +959,7 @@ function createFlameConfig5() {
           [0, 0],
         ],
       ]),
-        (this.sc = 0.1),
-        (this.animRate = [3, 5, 5]);
+        (this.sc = 0.1)
     }
     getMapExposure() {
       return 1.4096749;
@@ -1085,14 +986,6 @@ function createFlameConfig5() {
     getIterations() {
       return 3;
     }
-    getAnimRates() {
-      return this.animRate;
-    }
-    animate(e) {
-      this.defaultAnimate(e), (x += e);
-      var t = Math.sin(x / 1e3 / 4) + 1;
-      this.sc = 0.13 + 2 * t;
-    }
   })();
 }
 function createFlameConfig6() {
@@ -1108,8 +1001,7 @@ function createFlameConfig6() {
           [0.06098665, 0.7457995],
           [0.06173, -0.24791667],
         ],
-      ]),
-        (this.animRate = [3, 7]);
+      ])
     }
     getMapExposure() {
       return 2.4096749;
@@ -1136,9 +1028,6 @@ function createFlameConfig6() {
     getIterations() {
       return 5;
     }
-    getAnimRates() {
-      return this.animRate;
-    }
     getView() {
       var e = 1,
         t = 5.1 - 1.5 * e;
@@ -1159,8 +1048,7 @@ function createFlameConfig7() {
           [0.06098665, 0.7457995],
           [0.06173, -0.4791667],
         ],
-      ]),
-        (this.animRate = [1, 2]);
+      ]);
     }
     getMapExposure() {
       return 0.813749;
@@ -1186,9 +1074,6 @@ function createFlameConfig7() {
     getIterations() {
       return 4;
     }
-    getAnimRates() {
-      return this.animRate;
-    }
     getView() {
       var e = 1,
         t = 4.2 - 0.75 * e;
@@ -1204,8 +1089,7 @@ function createFlameConfig8() {
         [0.4015748, "linear", 1, [0.5, 0.55], [0.4, 0.5], [-0.5, 0]],
         [0.8976378, "spherical", 0.5, [0.8, -0.4], [0.4, 0.8], [0.2, 0.4]],
         [0.6929134, "spherical", 0.2, [-0.8, 0.4], [-0.4, -0.8], [0.2, 0.4]],
-      ]),
-        (this.animRate = [1, 2, 1, 2]);
+      ])
     }
     getMapExposure() {
       return -12.36133749;
@@ -1231,9 +1115,6 @@ function createFlameConfig8() {
     getIterations() {
       return 4;
     }
-    getAnimRates() {
-      return this.animRate;
-    }
     getView() {
       var e = 1,
         t = 5.2 - 1.2 * e;
@@ -1249,8 +1130,7 @@ function createFlameConfig9() {
         [0.2, "linear", 1, [0.5, 0], [10, 0.5], [-0.5, 0]],
         [0.8, "spherical", 0.8, [0.1, -0.4], [0.4, 0.41], [0.333, 0.4]],
         [0.8, "spherical", 0.4, [-10.8, 0.4], [-0.4, -110.8], [0.2, 0.4]],
-      ]),
-        (this.animRate = [-1, -1, -1, -1]);
+      ])
     }
     getMapExposure() {
       return 1.9;
@@ -1276,9 +1156,6 @@ function createFlameConfig9() {
     getIterations() {
       return 5;
     }
-    getAnimRates() {
-      return this.animRate;
-    }
     getView() {
       var e = 1,
         t = 6.2 - 1 * e;
@@ -1293,8 +1170,7 @@ function createFlameConfig10() {
         [0.33, "linear", 1.3, [0.5, 0], [0, 0.5], [0.5, 0]],
         [0.43, "heart", 1.1, [1, 0.5], [-0.5, 1], [0, -0.5]],
         [0.43, "spherical", 0.4, [-1, -0.5], [0.5, -1], [1, 1]],
-      ]),
-        (this.animRate = [2, 2, 2, 2]);
+      ])
     }
     getMapExposure() {
       return 2.2289143;
@@ -1319,9 +1195,6 @@ function createFlameConfig10() {
     }
     getIterations() {
       return 5;
-    }
-    getAnimRates() {
-      return this.animRate;
     }
     getView() {
       var e = 1,
@@ -1352,8 +1225,7 @@ function createFlameConfig11() {
           [1.3, 0],
         ],
         [0.333, "linear", 1, [0.5, 0], [0, 0.5], [0.3 * s, -s]],
-      ]),
-        (this.animRate = [10, 5, 1]);
+      ])
     }
     getMapExposure() {
       return 1.91;
@@ -1379,9 +1251,6 @@ function createFlameConfig11() {
     getIterations() {
       return 5;
     }
-    getAnimRates() {
-      return this.animRate;
-    }
     getView() {
       var e = 1,
         t = 0.5 - 0.1 * e;
@@ -1396,8 +1265,7 @@ function createFlameConfig12() {
         [0.33, "hyperbolic", 0.4, [0.5, 0], [0, 0.5], [-0.566, 0.4]],
         [0.33, "spherical", 0.4, [0.5, 0], [0, 0.5], [0.566, 0.4]],
         [0.33, "spherical", 0.4, [0.5, 0], [0, 0.5], [0, -0.551]],
-      ]),
-        (this.animRate = [1, 1, 1, 1]);
+      ])
     }
     getMapExposure() {
       return 2.46727;
@@ -1423,9 +1291,6 @@ function createFlameConfig12() {
     getIterations() {
       return 4;
     }
-    getAnimRates() {
-      return this.animRate;
-    }
     getView() {
       var e = 1,
         t = 2.2 - 0.2 * e;
@@ -1440,8 +1305,7 @@ function createFlameConfig13() {
         [0.28393, "spherical", 0.5, [0.5, 0], [0, 0.5], [-0.566, 0.4]],
         [0.21053, "spherical", 0.5, [0.5, 0], [0, 0.5], [0.566, 0.4]],
         [0.143482, "horseshoe", 0.9, [0.5, 0], [0, 0.5], [0, -0.551]],
-      ]),
-        (this.animRate = [1, 1, 1]);
+      ])
     }
     getMapExposure() {
       return 5.16944;
@@ -1467,39 +1331,12 @@ function createFlameConfig13() {
     getIterations() {
       return 5;
     }
-    getAnimRates() {
-      return this.animRate;
-    }
     getView() {
       var e = 1,
         t = 1.2 - 0.1 * e;
       return [t, t, 0, 0];
     }
   })();
-}
-function skipAnimate(e, t, r) {
-  var a,
-    o = e.getFlameTransforms();
-  for (a = 0; a < o.length; a++) {
-    var i = 2e-4 * e.getAnimRates()[a] * (1 + 0.1234 * a),
-      n = (e.angles[a] + i * t) % (2 * Math.PI);
-    0 > n && (n = 2 * Math.PI - n);
-    var l = Math.PI / 180;
-    2 > a && n < l * r && (n = l * r), (e.angles[a] = n);
-    var g = Math.cos(n),
-      c = Math.sin(n),
-      s = vec2.fromValues(e.origX[a][0], e.origX[a][1]),
-      f = vec2.fromValues(e.origY[a][0], e.origY[a][1]),
-      u = vec2.subtract(
-        vec2.create(),
-        vec2.scale(s, s, g),
-        vec2.scale(f, f, c)
-      ),
-      p = vec2.fromValues(e.origX[a][0], e.origX[a][1]),
-      d = vec2.fromValues(e.origY[a][0], e.origY[a][1]),
-      x = vec2.add(vec2.create(), vec2.scale(p, p, c), vec2.scale(d, d, g));
-    o[a].setX(u), o[a].setY(x);
-  }
 }
 function initAbsRotation(e) {
   (e.origX = []), (e.origY = []), (e.angles = []);
@@ -1516,9 +1353,7 @@ function createFlameConfig14() {
         [0.333, "spherical", 0.4, [0.5, 0], [0, 0.5], [-0.566, 0.4]],
         [0.333, "spherical", 0.4, [0.5, 0], [0, 0.5], [0.566, 0.4]],
         [-0.00382, "horseshoe", 0.4, [0.5, 0], [0, 0.5], [0, -0.551]],
-      ]),
-        (this.animRate = [-1, 0.4, 3]),
-        initAbsRotation(this);
+      ])
     }
     getMapExposure() {
       return 5.06021;
@@ -1552,9 +1387,6 @@ function createFlameConfig14() {
         t = 3.2 - 0.5 * e;
       return [t, t, 0, 0];
     }
-    animate(e) {
-      skipAnimate(this, e, 80);
-    }
   })();
 }
 function createFlameConfig15() {
@@ -1564,9 +1396,7 @@ function createFlameConfig15() {
         [0.333, "spherical", 0.4, [0.5, 0], [0, 0.5], [-0.566, 0.4]],
         [0.333, "spherical", 0.4, [0.5, 0], [0, 0.5], [0.566, 0.4]],
         [0.333, "swirl", 0.4, [0.5, 0], [0, 0.5], [0, -0.551]],
-      ]),
-        (this.animRate = [-1, 1, 4]),
-        initAbsRotation(this);
+      ])
     }
     getMapExposure() {
       return 2.66021;
@@ -1601,12 +1431,70 @@ function createFlameConfig15() {
         t = 2.2 - 0.3 * e;
       return [t, t, 0, 0];
     }
-    animate(e) {
-      skipAnimate(this, e, 80);
+  })();
+}
+*/
+function createFlameConfigX6() {
+  return new (class extends FlameConfig {
+    constructor() {
+      super([
+        [
+          0.35,
+          "linear",
+          0.7,
+          [0.361507, 0.1303464],
+          [-0.1303464, 0.361507],
+          [0.625, 0],
+        ],
+        [
+          0.85,
+          "linear",
+          0.9,
+          [0.08563109, 0.7551379],
+          [-0.7551379, 0.08563109],
+          [0, 0],
+        ],
+        [
+          0.35,
+          "linear",
+          1,
+          [0.5003027, 0.8662202],
+          [-0.8662202, 0.5003027],
+          [0, 0],
+        ],
+      ]);
+    }
+    getMapExposure() {
+      return 2.4;
+    }
+    getColorful() {
+      return 0.8323;
+    }
+    getTexScale() {
+      return 1;
+    }
+    getFirstLevel() {
+      return 7;
+    }
+    getLastLevel() {
+      return 10;
+    }
+    getScreenInitVal() {
+      return 2.4;
+    }
+    getScreenInitScale() {
+      return 0.09;
+    }
+    getIterations() {
+      return 4;
+    }
+    getView() {
+      var e = 1,
+        t = 1.5 - 0.25 * e;
+      return [t, t, 0, 0];
     }
   })();
 }
-var defaultAnimRates = [1, 1, 1, 1, 1, 1, 1, 1];
 makeTransforms = function (t) {
   var r,
     a = [];
@@ -1631,9 +1519,6 @@ class FlameConfig {
       (this.screen_initscale = 0.2),
       (this.iterations = 3),
       (this.oldval = 0);
-  }
-  decay(e) {
-    return (this.oldval = this.oldval * 0.95 + e * 0.3), this.oldval;
   }
   getMapExposure() {
     return this.map_exposure;
@@ -1674,26 +1559,6 @@ class FlameConfig {
   getView() {
     return [5, 5, 0, 0];
   }
-  animate(e) {
-    this.defaultAnimate(e);
-  }
-  defaultAnimate(e) {
-    e = e * 0.00000000001
-    for (var t = this.getFlameTransforms(), r = 0; r < t.length; r++) {
-      var a = 2e-4 * this.getAnimRates()[r] * (1 + 0.1234 * r),
-        o = a * e,
-        i = Math.cos(o),
-        n = Math.sin(o),
-        l = t[r].getX(),
-        s = t[r].getY();
-      (l = vec2.scale(l, l, i)), (s = vec2.scale(s, s, n));
-      var c = vec2.subtract(vec2.create(), l, s),
-        g = t[r].getX(),
-        f = t[r].getY(),
-        u = vec2.add(vec2.create(), vec2.scale(g, g, n), vec2.scale(f, f, i));
-      t[r].setX(c), t[r].setY(u);
-    }
-  }
   getAnimRates() {
     return defaultAnimRates;
   }
@@ -1719,7 +1584,7 @@ class FrameMgr {
     return this.frameDest;
   }
 }
-class Furnance {
+class Furnace {
   constructor(e) {
     gl = e;
     var t =
@@ -2153,7 +2018,7 @@ class Furnance {
     return gl.bindFramebuffer(gl.FRAMEBUFFER, null), e.getSource();
   }
 }
-var gl, demo;
+var gl;
 function getPostprocessShaderCode() {
   const vert = `precision highp float;
   varying vec3 worldCoords;
@@ -2175,48 +2040,21 @@ function getPostprocessShaderCode() {
   uniform float uColormode;
   uniform vec2 uScale;
   uniform vec2 uMove;
-  uniform float uFade;
-  uniform float uDither[64];
-  uniform float uMix;
   float Scale = 1.0;
   void main(void) {
     vec2 uv=ab(vec2(uScale.x*(worldCoords.x+uMove.x),uScale.y*((worldCoords.y+uMove.y))));
     vec3 rgb = texture2D(uTexture, uv).rgb;
-    rgb= (rgb*uColormode + (1.0-rgb)*(1.0-uColormode))*uFade;
+    rgb= (rgb*uColormode + (1.0-rgb)*(1.0-uColormode));
     gl_FragColor = vec4(rgb, 1.0);
   }`
   
   return { vert, frag };
 }
-class DemoMain {
+class Engine {
   constructor() {
     (this.sizeX = window.innerWidth),
       (this.sizeY = window.innerHeight),
-      (this.flameConfigs = [
-        [1e3, 15, 1e3, createFlameConfig11()],
-        [1e3, 15, 1e3, createFlameConfigX5()],
-        [1e3, 15, 1e3, createFlameConfigX6()],
-        [1e3, 15, 1e3, createFlameConfigX4()],
-        [1e3, 15, 1e3, createFlameConfig14()],
-        [1e3, 15, 1e3, createFlameConfigX3()],
-        [1e3, 15, 1e3, createFlameConfigX2()],
-        [1e3, 15, 1e3, createFlameConfig12()],
-        [1e3, 15, 1e3, createFlameConfig10()],
-        [1e3, 15, 1e3, createFlameConfigX()],
-        [1e3, 15, 1e3, createFlameConfig6()],
-        [1e3, 15, 1e3, createFlameConfig2()],
-        [1e3, 15, 1e3, createFlameConfig1()],
-        [1e3, 15, 1e3, createFlameConfig7()],
-        [1e3, 15, 1e3, createFlameConfig9()],
-        [1e3, 15, 1e3, createFlameConfig4()],
-        [1e3, 15, 1e3, createFlameConfig5()],
-        [1e3, 15, 1e3, createFlameConfigX1()],
-        [1e3, 15, 1e3, createFlameConfig0()],
-        [1e3, 15, 1e3, createFlameConfig8()],
-      ]),
-      this.furnance,
-      (this.currentConfigId = 0),
-      this.currentConfig,
+      this.furnace,
       this.ctxSpectrum,
       this.spectrumWidth,
       this.spectrumHeight,
@@ -2227,71 +2065,26 @@ class DemoMain {
   init() {
     (window.gl = this.initGl(document.getElementById("canvas2"), null)),
       (window.opengl = new OpenGL()),
-      (this.furnance = new Furnance(gl));
+      (this.furnace = new Furnace(gl));
   }
   initGl(e, t) {
-    var r, a;
-    if (
-      ((a =
-        "undefined" != typeof e && null != e
-          ? e
-          : document.getElementById("someCanvas")),
-      "undefined" != typeof t && null != t)
-    )
-      r = t;
-    else {
-      try {
-        r = a.getContext("webgl", { depth: !1 });
-      } catch (t) {}
-      if (!r) return void alert("Your browser does not support WebGL2");
-    }
-    return (a.width = this.sizeX), (a.height = this.sizeY), r;
-  }
-  getNextConfig() {
-    return (
-      this.currentConfig && this.currentConfigId++,
-      this.currentConfigId >= this.flameConfigs.length &&
-        (this.currentConfigId = 0),
-      (this.currentConfig = this.flameConfigs[this.currentConfigId]),
-      this.currentConfig
-    );
+    var r;
+    try {
+      r = e.getContext("webgl", { depth: !1 });
+    } catch (t) {}
+    if (!r) return void alert("Your browser does not support WebGL2");
+    return (e.width = this.sizeX), (e.height = this.sizeY), r;
   }
   setConfig(e) {
-    this.currentConfig = [1e3, 15, 0, e];
-    this.flameConfigs = [this.currentConfig];
-    this.furnance.setConfig(e);
-
+    this.currentConfig = e;
+    this.furnace.setConfig(e);
   }
   getConfig() {
-    return this.currentConfig ? this.currentConfig : this.getNextConfig();
-  }
-  animate() {
-    var e = new Date().getTime();
-    0 != this.lastTime && this.furnance.getConfig().animate(e),
-      (this.lastTime = e);
+    return this.currentConfig
   }
   render() {
-    var e = new Date().getTime();
-    this.currentAnimStart || (this.currentAnimStart = e);
-    for (
-      var t, r, a, o = this.getConfig();
-      (t = this.currentAnimStart + o[0]),
-        (r = t + 1e3 * o[1]),
-        (a = r + o[2]),
-        e >= a;
-
-    )
-      (o = this.getNextConfig()), (this.currentAnimStart = e);
-    var i = 1;
-    if (!o[2] === 0) {
-      e < t
-        ? (i = (e - this.currentAnimStart) / o[0])
-        : e >= r && (i = 1 - (e - r) / o[2])
-    }
-    this.furnance.setConfig(o[3])
-    this.drawScene(window.innerWidth, window.innerHeight, i)
-    this.animate()
-    window.requestAnimFrame(this.render.bind(this));
+    this.drawScene(window.innerWidth, window.innerHeight)
+    window.requestAnimationFrame(this.render.bind(this));
   }
   getPostprocessShader() {
     const shader = getPostprocessShaderCode()
@@ -2310,30 +2103,16 @@ class DemoMain {
           this.postprocessProg,
           "uColormode"
         )),
-        (this.postprocessProg.uFade = gl.getUniformLocation(
-          this.postprocessProg,
-          "uFade"
-        )),
         (this.postprocessProg.uTexture = gl.getUniformLocation(
           this.postprocessProg,
           "uTexture"
-        )),
-        (this.postprocessProg.uDither = gl.getUniformLocation(
-          this.postprocessProg,
-          "uDither"
-        )),
-        (this.postprocessProg.uMix = gl.getUniformLocation(
-          this.postprocessProg,
-          "uMix"
-        ))),
+        ))
+        ),
       this.postprocessProg
     );
   }
-  decay(e) {
-    return (this.oldval = this.oldval * 0.95 + e * 0.3), this.oldval;
-  }
-  drawScene(e, t, r) {
-    var a = this.furnance.ignite();
+  drawScene(e, t) {
+    var a = this.furnace.ignite();
     gl.bindTexture(gl.TEXTURE_2D, a),
       gl.viewport(0, 0, e, t),
       gl.enable(gl.DEPTH_TEST),
@@ -2343,45 +2122,17 @@ class DemoMain {
       gl.enable(gl.DEPTH_TEST);
     var o = this.getPostprocessShader();
     gl.useProgram(o);
-    var i = this.furnance.getConfig().getView();
+    var i = this.furnace.getConfig().getView();
     gl.activeTexture(gl.TEXTURE0),
       gl.uniform1i(o.uTexture, 0),
       gl.uniform2f(o.uScale, i[0], i[1]),
       gl.uniform2f(o.uMove, i[2], i[3]),
       gl.uniform1f(
         o.uColormode,
-        0 > this.furnance.getConfig().getMapExposure() ? 0 : 1
-      ),
-      gl.uniform1f(o.uFade, r);
+        0 > this.furnace.getConfig().getMapExposure() ? 0 : 1
+      )
     var n = 1;
-    gl.uniform1f(o.uMix, 1 - n),
-      gl.uniform1fv(
-        o.uDither,
-        [
-          0, 32, 8, 40, 2, 34, 10, 42, 48, 16, 56, 24, 50, 18, 58, 26, 12, 44,
-          4, 36, 14, 46, 6, 38, 60, 28, 52, 20, 62, 30, 54, 22, 3, 35, 11, 43,
-          1, 33, 9, 41, 51, 19, 59, 27, 49, 17, 57, 25, 15, 47, 7, 39, 13, 45,
-          5, 37, 63, 31, 55, 23, 61, 29, 53, 21,
-        ]
-      );
     opengl.draw_texture(o, mat4.create(), [-1, -1, 0.5], [1, 1, 0.5]),
       gl.useProgram(null);
   }
-}
-function startDemo() {
-    (window.requestAnimFrame = (function () {
-      return (
-        window.requestAnimationFrame ||
-        window.webkitRequestAnimationFrame ||
-        window.mozRequestAnimationFrame ||
-        window.oRequestAnimationFrame ||
-        window.msRequestAnimationFrame ||
-        function (e) {
-          window.setTimeout(e, 1e3 / 60);
-        }
-      );
-    })()),
-    (window.demo = new DemoMain()),
-    window.demo.init(),
-    window.demo.render()
 }
