@@ -17,8 +17,10 @@ import {javascript} from "@codemirror/lang-javascript"
 import { nord } from 'cm6-theme-nord'
 import { vim, Vim, getCM } from "@replit/codemirror-vim"
 import { linter } from "@codemirror/lint";
+import { flame, transform } from "./bl4st.mjs"
+import { Engine } from "./ablaze.mjs"
 
-const engine = new Engine()
+const engine = new Engine(document.getElementById("canvas"))
 engine.init()
 
 let errors = [];
@@ -79,7 +81,7 @@ if (params.get("v") !== null) {
   vimExtension = [vim()];
 }
 
-export const basicSetup = [
+const basicSetup = [
   lineNumbers(),
   highlightActiveLineGutter(),
   highlightSpecialChars(),

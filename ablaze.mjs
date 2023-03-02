@@ -11,7 +11,11 @@
  * based on a GPU version by:
  *	Orion Sky Lawlor, olawlor@acm.org, 2011-10-31 (Public Domain)
  */
-  (OpenGL = function () {
+import { vec2, vec3, mat4 } from "gl-matrix";
+
+  var OpenGL
+  (OpenGL = function (gl) {
+    this.gl = gl;
     (this.U_PROJECTION = 0),
       (this.U_MODELVIEW = 1),
       (this.U_TEXTURE = 2),
@@ -38,21 +42,21 @@
   }),
   (OpenGL.prototype = {
     makeProgramObject: function (e, t) {
-      var r = this.loadShader(gl.VERTEX_SHADER, e),
-        a = this.loadShader(gl.FRAGMENT_SHADER, t),
-        o = gl.createProgram();
+      var r = this.loadShader(this.gl.VERTEX_SHADER, e),
+        a = this.loadShader(this.gl.FRAGMENT_SHADER, t),
+        o = this.gl.createProgram();
       if (
-        (gl.attachShader(o, r),
-        gl.attachShader(o, a),
-        gl.deleteShader(r),
-        gl.deleteShader(a),
-        gl.linkProgram(o),
-        !gl.getProgramParameter(o, gl.LINK_STATUS))
+        (this.gl.attachShader(o, r),
+        this.gl.attachShader(o, a),
+        this.gl.deleteShader(r),
+        this.gl.deleteShader(a),
+        this.gl.linkProgram(o),
+        !this.gl.getProgramParameter(o, this.gl.LINK_STATUS))
       )
         throw (
           (console.error(
             "An error occurred compiling the shaders: " +
-              gl.getProgramInfoLog(o)
+              this.gl.getProgramInfoLog(o)
           ),
           Error("Unable to initialize the shader program."))
         );
@@ -93,28 +97,28 @@
           n[1],
           n[2],
         ]),
-        c = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, c),
-        gl.bufferData(gl.ARRAY_BUFFER, s, gl.STATIC_DRAW),
+        c = this.gl.createBuffer();
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, c),
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, s, this.gl.STATIC_DRAW),
         (c.itemSize = 3),
         (c.numItems = s.length / 3),
-        gl.enableVertexAttribArray(e.leg_gl_Vertex),
-        gl.vertexAttribPointer(e.leg_gl_Vertex, c.itemSize, gl.FLOAT, !1, 0, 0),
-        gl.drawArrays(gl.TRIANGLE_STRIP, 0, c.numItems);
+        this.gl.enableVertexAttribArray(e.leg_gl_Vertex),
+        this.gl.vertexAttribPointer(e.leg_gl_Vertex, c.itemSize, this.gl.FLOAT, !1, 0, 0),
+        this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, c.numItems);
     },
     loadShader: function (e, t) {
-      var r = gl.createShader(e);
+      var r = this.gl.createShader(e);
       if (
-        (gl.shaderSource(r, t),
-        gl.compileShader(r),
-        !gl.getShaderParameter(r, gl.COMPILE_STATUS))
+        (this.gl.shaderSource(r, t),
+        this.gl.compileShader(r),
+        !this.gl.getShaderParameter(r, this.gl.COMPILE_STATUS))
       )
         throw (
           (console.error(
-            "An error occurred compiling the shaders: " + gl.getShaderInfoLog(r)
+            "An error occurred compiling the shaders: " + this.gl.getShaderInfoLog(r)
           ),
           Error(
-            "An error occurred compiling the shaders: " + gl.getShaderInfoLog(r)
+            "An error occurred compiling the shaders: " + this.gl.getShaderInfoLog(r)
           ))
         );
       return r;
@@ -199,20 +203,20 @@
         this.activeMatrix[t] = e[t];
     },
     setLegacyAttribLocation: function (e) {
-      (e.leg_gl_Vertex = gl.getAttribLocation(e, "leg_gl_Vertex")),
-        (e.leg_gl_ProjectionMatrix = gl.getUniformLocation(
+      (e.leg_gl_Vertex = this.gl.getAttribLocation(e, "leg_gl_Vertex")),
+        (e.leg_gl_ProjectionMatrix = this.gl.getUniformLocation(
           e,
           "leg_gl_ProjectionMatrix"
         )),
-        (e.leg_gl_ModelViewMatrix = gl.getUniformLocation(
+        (e.leg_gl_ModelViewMatrix = this.gl.getUniformLocation(
           e,
           "leg_gl_ModelViewMatrix"
         )),
-        (e.leg_gl_Color = gl.getUniformLocation(e, "leg_gl_Color"));
+        (e.leg_gl_Color = this.gl.getUniformLocation(e, "leg_gl_Color"));
     },
     setLegacyFixedPipelineParams: function (e) {
-      gl.uniformMatrix4fv(e.leg_gl_ProjectionMatrix, !1, this.prMatrix),
-        gl.uniformMatrix4fv(e.leg_gl_ModelViewMatrix, !1, this.mvMatrix);
+      this.gl.uniformMatrix4fv(e.leg_gl_ProjectionMatrix, !1, this.prMatrix),
+        this.gl.uniformMatrix4fv(e.leg_gl_ModelViewMatrix, !1, this.mvMatrix);
     },
   });
 function expandString(e, t) {
@@ -400,6 +404,9 @@ class FlameTransform extends Variation {
       (this._wvar = wvar),
       (this._nUniforms = 8);
   }
+  setGL(gl) {
+    this.gl = gl
+  }
   getTag() {
     return this._tag;
   }
@@ -496,12 +503,12 @@ class FlameTransform extends Variation {
   }
   setUniformLoc(e, t) {
     "undefined" == typeof e.xfUniformLoc && (e.xfUniformLoc = []),
-      (e.xfUniformLoc[t] = gl.getUniformLocation(e, "xf" + this._tag));
+      (e.xfUniformLoc[t] = this.gl.getUniformLocation(e, "xf" + this._tag));
   }
   setUniforms(e, t) {
     var r = Array(this.nUniforms);
     this.getXfUniforms(r),
-      gl.uniform2fv(e.xfUniformLoc[t], this.getFloat32Array(r));
+      this.gl.uniform2fv(e.xfUniformLoc[t], this.getFloat32Array(r));
   }
   getCode() {
     var e = {
@@ -536,65 +543,6 @@ class FlameTransform extends Variation {
         );
     return t;
   }
-}
-class TransformBuilder {
-  constructor() {
-    this._name = "linear"
-    this._weight = 0.5
-    this._wvar = 1
-    this._x = [0.5, 0.5]
-    this._y = [-1, .5]
-    this._o = [0, 0]
-    const self = this
-    variation_list.forEach((v) => {
-      const name = v.getName()
-      self[name] = () => {
-        self.name(name)
-        return self
-      }
-    })
-  }
-
-  name(n) {
-    this._name = n
-    return this
-  }
-
-  weight(w) {
-    this._weight = w
-    return this
-  }
-
-  wvar(w) {
-    this._wvar = w
-    return this
-  }
-
-  x(v) {
-    this._x = v
-    return this
-  }
-
-  y(v) {
-    this._y = v
-    return this
-  }
-
-  o(v) {
-    this._o = v
-    return this
-  }
-
-  build() {
-    return new FlameTransform(this._weight, this._name, this._wvar, this._x, this._y, this._o)
-  }
-}
-// TODO allow positionally passing default param overrides in constructor
-function transform() {
-  return new TransformBuilder()
-}
-function flame() {
-  return new FlameConfig()
 }
 class FlameConfig {
   constructor() {
@@ -708,6 +656,10 @@ class FlameConfig {
     this.time = t
     this.xf.forEach((x) => x.setTime(t))
   }
+
+  setGL(gl) {
+    this.xf.forEach((x) => x.setGL(gl))
+  }
 }
 class FrameMgr {
   constructor(e, t) {
@@ -731,11 +683,12 @@ class FrameMgr {
   }
 }
 class Furnace {
-  constructor(e) {
-    gl = e;
+  constructor(gl, opengl) {
+    this.gl = gl;
+    this.opengl = opengl;
     var t =
-      gl.getExtension("OES_float_linear") ||
-      gl.getExtension("OES_half_float_linear");
+      this.gl.getExtension("OES_float_linear") ||
+      this.gl.getExtension("OES_half_float_linear");
     (this.useFloatTextures = !!t),
       (this.config = 0),
       (this.xfm_cached_px = 0),
@@ -749,6 +702,7 @@ class Furnace {
   }
   setConfig(e) {
     this.config = e;
+    this.config.setGL(this.gl);
   }
   getConfig() {
     return this.config;
@@ -757,15 +711,15 @@ class Furnace {
     return 1 / e;
   }
   setTextureUniformLocs(e) {
-    (e.tex = gl.getUniformLocation(e, "tex")),
-      (e.texscale = gl.getUniformLocation(e, "texscale")),
-      (e.texscalei = gl.getUniformLocation(e, "texscalei"));
+    (e.tex = this.gl.getUniformLocation(e, "tex")),
+      (e.texscale = this.gl.getUniformLocation(e, "texscale")),
+      (e.texscalei = this.gl.getUniformLocation(e, "texscalei"));
   }
   setProgramParams(e, t) {
-    gl.uniform1i(e.tex, 0),
-      gl.uniform1f(e.texscale, t),
-      gl.uniform1f(e.texscalei, this.getI(t)),
-      opengl.setLegacyFixedPipelineParams(e);
+    this.gl.uniform1i(e.tex, 0),
+      this.gl.uniform1f(e.texscale, t),
+      this.gl.uniform1f(e.texscalei, this.getI(t)),
+      this.opengl.setLegacyFixedPipelineParams(e);
   }
   errorExit(e, t) {
     throw (
@@ -773,27 +727,27 @@ class Furnace {
     );
   }
   bad_framebuffer(e) {
-    e === gl.FRAMEBUFFER_COMPLETE
+    e === this.gl.FRAMEBUFFER_COMPLETE
       ? this.errorExit(
           "gl.framebufferTexture2D",
           "framebuffer is actually OK (?!)"
         )
-      : e === gl.FRAMEBUFFER_UNSUPPORTED
+      : e === this.gl.FRAMEBUFFER_UNSUPPORTED
       ? this.errorExit(
           "gl.framebufferTexture2D",
           "combination of formats is UNSUPPORTED by your card"
         )
-      : e === gl.FRAMEBUFFER_INCOMPLETE_ATTACHMENT
+      : e === this.gl.FRAMEBUFFER_INCOMPLETE_ATTACHMENT
       ? this.errorExit(
           "gl.framebufferTexture2D",
           "FRAMEBUFFER_INCOMPLETE_ATTACHMENT"
         )
-      : e === gl.FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT
+      : e === this.gl.FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT
       ? this.errorExit(
           "gl.framebufferTexture2D",
           "FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT"
         )
-      : e === gl.FRAMEBUFFER_INCOMPLETE_DIMENSIONS
+      : e === this.gl.FRAMEBUFFER_INCOMPLETE_DIMENSIONS
       ? this.errorExit(
           "gl.framebufferTexture2D",
           "FRAMEBUFFER_INCOMPLETE_DIMENSIONS"
@@ -882,32 +836,32 @@ class Furnace {
     if (0 == this.progPerPixMap || this.xfm_cached_px != e) {
       this.xfm_cached_px = e;
       const shader = this.getPerPixelMapShaderCode(e)
-      this.progPerPixMap = opengl.makeProgramObject(shader["vert"], shader["frag"])
+      this.progPerPixMap = this.opengl.makeProgramObject(shader["vert"], shader["frag"])
       this.progPerPixMap.uniformLocs = [];
       var i;
       for (i = 0; i < e.length; i++)
         e[i].hasInverse(this.config.getForceVertexOnly()) &&
           (e[i].setUniformLoc(this.progPerPixMap, i),
-          (this.progPerPixMap.uniformLocs[i] = gl.getUniformLocation(
+          (this.progPerPixMap.uniformLocs[i] = this.gl.getUniformLocation(
             this.progPerPixMap,
             "color" + e[i].getTag()
           )));
       this.setTextureUniformLocs(this.progPerPixMap);
     }
-    gl.useProgram(this.progPerPixMap),
+    this.gl.useProgram(this.progPerPixMap),
       this.setProgramParams(this.progPerPixMap, this.config.getTexScale());
     var i;
     for (i = 0; i < e.length; i++)
       e[i].hasInverse(this.config.getForceVertexOnly()) &&
         (e[i].setUniforms(this.progPerPixMap, i),
-        gl.uniform4fv(this.progPerPixMap.uniformLocs[i], this.mapColor(e, i)));
-    opengl.draw_texture(
+        this.gl.uniform4fv(this.progPerPixMap.uniformLocs[i], this.mapColor(e, i)));
+    this.opengl.draw_texture(
       this.progPerPixMap,
       mat4.create(),
       [-1, -1, 0.5],
       [1, 1, 0.5]
     ),
-      gl.useProgram(null);
+      this.gl.useProgram(null);
   }
   TXfmPL(e, t) {
     return (e *= t), 0.5 * (e / Math.sqrt(1 + e * e)) + 0.5;
@@ -933,49 +887,49 @@ class Furnace {
   useSeedShader() {
     if (!this.seedShader) {
       const seedShader = this.getSeedShaderCode()
-      var e = opengl.loadShader(
-          gl.VERTEX_SHADER,
+      var e = this.opengl.loadShader(
+          this.gl.VERTEX_SHADER,
           seedShader["vert"]
         ),
-        t = opengl.loadShader(
-          gl.FRAGMENT_SHADER,
+        t = this.opengl.loadShader(
+          this.gl.FRAGMENT_SHADER,
           seedShader["frag"]
         ),
-        r = gl.createProgram();
+        r = this.gl.createProgram();
       if (
-        (gl.attachShader(r, e),
-        gl.attachShader(r, t),
-        gl.linkProgram(r),
-        !gl.getProgramParameter(r, gl.LINK_STATUS))
+        (this.gl.attachShader(r, e),
+        this.gl.attachShader(r, t),
+        this.gl.linkProgram(r),
+        !this.gl.getProgramParameter(r, this.gl.LINK_STATUS))
       )
         throw Error("Unable to initialize the shader program.");
-      gl.useProgram(r),
-        (r.a_Vertex = gl.getAttribLocation(r, "a_Vertex")),
-        (r.ucolorloc = gl.getUniformLocation(r, "u_color")),
-        (r.upointsizeloc = gl.getUniformLocation(r, "u_pointsize")),
-        (r.mvpmatrixloc = gl.getUniformLocation(r, "mvp_matrix")),
+      this.gl.useProgram(r),
+        (r.a_Vertex = this.gl.getAttribLocation(r, "a_Vertex")),
+        (r.ucolorloc = this.gl.getUniformLocation(r, "u_color")),
+        (r.upointsizeloc = this.gl.getUniformLocation(r, "u_pointsize")),
+        (r.mvpmatrixloc = this.gl.getUniformLocation(r, "mvp_matrix")),
         (this.seedShader = r);
-    } else gl.useProgram(this.seedShader);
+    } else this.gl.useProgram(this.seedShader);
     return this.seedShader;
   }
   drawSeedTexture(e) {
-    gl.clearColor(0, 0, 0, 1),
-      gl.clear(gl.COLOR_BUFFER_BIT),
-      opengl.uPushMatrix(),
-      opengl.uTranslatef(0.5, 0.5, 0);
+    this.gl.clearColor(0, 0, 0, 1),
+      this.gl.clear(this.gl.COLOR_BUFFER_BIT),
+      this.opengl.uPushMatrix(),
+      this.opengl.uTranslatef(0.5, 0.5, 0);
     var t = this.config.getScreenInitScale(),
       r = t * (this.TXfmPL(1, e) - this.TXfmPL(0, e)),
       a = this.useSeedShader(),
       o = vec3.fromValues(0, 0, 0),
       i = vec3.fromValues(r, r, 0);
-    gl.uniform1f(a.upointsizeloc, 1);
+    this.gl.uniform1f(a.upointsizeloc, 1);
     var n = this.config.getScreenInitVal();
-    gl.uniform4f(a.ucolorloc, n, n, n, 1),
-      gl.uniform1i(a.stextureloc, 0),
-      opengl.multiply(opengl.mvpMatrix, opengl.mvMatrix, opengl.prMatrix),
-      gl.uniformMatrix4fv(a.mvpmatrixloc, !1, opengl.mvpMatrix),
-      opengl.draw_texture(a, mat4.create(), o, i),
-      opengl.uPopMatrix();
+    this.gl.uniform4f(a.ucolorloc, n, n, n, 1),
+      this.gl.uniform1i(a.stextureloc, 0),
+      this.opengl.multiply(this.opengl.mvpMatrix, this.opengl.mvMatrix, this.opengl.prMatrix),
+      this.gl.uniformMatrix4fv(a.mvpmatrixloc, !1, this.opengl.mvpMatrix),
+      this.opengl.draw_texture(a, mat4.create(), o, i),
+      this.opengl.uPopMatrix();
   }
   addVertex(e, t) {
     e.push(t[0]), e.push(t[1]), e.push(0);
@@ -997,18 +951,18 @@ class Furnace {
         }
       this.lastRes = r;
     }
-    var s = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, s),
-      gl.bufferData(
-        gl.ARRAY_BUFFER,
+    var s = this.gl.createBuffer();
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, s),
+      this.gl.bufferData(
+        this.gl.ARRAY_BUFFER,
         new Float32Array(this.cachedVertices),
-        gl.STATIC_DRAW
+        this.gl.STATIC_DRAW
       ),
       (s.itemSize = 3),
       (s.numItems = this.cachedVertices.length / 3),
-      gl.enableVertexAttribArray(e.leg_gl_Vertex),
-      gl.vertexAttribPointer(e.leg_gl_Vertex, s.itemSize, gl.FLOAT, !1, 0, 0),
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, s.numItems);
+      this.gl.enableVertexAttribArray(e.leg_gl_Vertex),
+      this.gl.vertexAttribPointer(e.leg_gl_Vertex, s.itemSize, this.gl.FLOAT, !1, 0, 0),
+      this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, s.numItems);
   }
   simulate_pervertex_map(e, t, r) {
     if (0 == this.xfm_prog[r] || !e[r].equals(this.xfm_cached_vx[r])) {
@@ -1036,7 +990,7 @@ class Furnace {
       this.xfm_cached_vx[r] = e[r];
       var o = { "%VAR_CODE%": e[r].getCode(), "%ID%": e[r].getTag() },
         i = expandString(a, o);
-      (this.xfm_prog[r] = opengl.makeProgramObject(
+      (this.xfm_prog[r] = this.opengl.makeProgramObject(
         i,
         "precision highp float;\vvarying vec4 color;\nvarying vec2 texcoords;\nuniform sampler2D tex;\nvoid main(void) {\n\tgl_FragColor = color*texture2D(tex,texcoords);\n}"
       )),
@@ -1044,34 +998,34 @@ class Furnace {
         this.setTextureUniformLocs(this.xfm_prog[r]);
     }
     var n = this.xfm_prog[r];
-    gl.useProgram(n),
+    this.gl.useProgram(n),
       this.setProgramParams(n, this.config.getTexScale()),
       e[r].setUniforms(n, r),
       this.draw_pervertex_map(n, this.config.getDiscCompute()),
-      gl.useProgram(null);
+      this.gl.useProgram(null);
   }
   drawInverseFuncs(e, t) {
-    gl.disable(gl.BLEND),
+    this.gl.disable(this.gl.BLEND),
       this.config.getForceVertexOnly()
-        ? (gl.clearColor(0, 0, 0, 1), gl.clear(gl.COLOR_BUFFER_BIT))
+        ? (this.gl.clearColor(0, 0, 0, 1), this.gl.clear(this.gl.COLOR_BUFFER_BIT))
         : this.simulate_perpixel_maps(e, t),
-      gl.enable(gl.BLEND);
+      this.gl.enable(this.gl.BLEND);
     var r;
     for (r = 0; r < e.length; r++)
       e[r].hasInverse(this.config.getForceVertexOnly()) ||
         this.simulate_pervertex_map(e, t, r);
   }
   setFramebufTextureAttachment(e) {
-    gl.framebufferTexture2D(
-      gl.FRAMEBUFFER,
-      gl.COLOR_ATTACHMENT0,
-      gl.TEXTURE_2D,
+    this.gl.framebufferTexture2D(
+      this.gl.FRAMEBUFFER,
+      this.gl.COLOR_ATTACHMENT0,
+      this.gl.TEXTURE_2D,
       e,
       0
     );
-    var t = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
-    t != gl.FRAMEBUFFER_COMPLETE && this.bad_framebuffer(t),
-      gl.disable(gl.DEPTH_TEST);
+    var t = this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER);
+    t != this.gl.FRAMEBUFFER_COMPLETE && this.bad_framebuffer(t),
+      this.gl.disable(this.gl.DEPTH_TEST);
   }
   drawMapLevel(e, t, r, a) {
     var o = t.getDestination();
@@ -1079,13 +1033,13 @@ class Furnace {
     var i = 1 << r,
       n = 1 << r;
     if (
-      (gl.viewport(0, 0, i, n),
-      gl.scissor(0, 0, i, n),
+      (this.gl.viewport(0, 0, i, n),
+      this.gl.scissor(0, 0, i, n),
       0 == a && r == this.config.getFirstLevel()
         ? this.drawSeedTexture(this.config.getTexScale())
         : this.drawInverseFuncs(e, r),
-      gl.bindTexture(gl.TEXTURE_2D, o),
-      gl.generateMipmap(gl.TEXTURE_2D),
+      this.gl.bindTexture(this.gl.TEXTURE_2D, o),
+      this.gl.generateMipmap(this.gl.TEXTURE_2D),
       t.swap(),
       0 == a && r != this.config.getFirstLevel())
     ) {
@@ -1106,52 +1060,52 @@ class Furnace {
         var r;
         for (r = 0; 2 > r; r++) {
           var a = 1 << t,
-            o = gl.createTexture();
+            o = this.gl.createTexture();
           (o.width = a),
             (o.height = a),
             (this.texLevels[t][r] = o),
-            gl.bindTexture(gl.TEXTURE_2D, this.texLevels[t][r]);
-          var n = this.useFloatTextures ? gl.FLOAT : gl.UNSIGNED_BYTE;
-          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, a, a, 0, gl.RGBA, n, null);
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.texLevels[t][r]);
+          var n = this.useFloatTextures ? this.gl.FLOAT : this.gl.UNSIGNED_BYTE;
+          this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, a, a, 0, this.gl.RGBA, n, null);
           var l =
-            gl.getExtension("EXT_texture_filter_anisotropic") ||
-            gl.getExtension("MOZ_EXT_texture_filter_anisotropic") ||
-            gl.getExtension("WEBKIT_EXT_texture_filter_anisotropic");
+            this.gl.getExtension("EXT_texture_filter_anisotropic") ||
+            this.gl.getExtension("MOZ_EXT_texture_filter_anisotropic") ||
+            this.gl.getExtension("WEBKIT_EXT_texture_filter_anisotropic");
           l &&
-            gl.texParameterf(gl.TEXTURE_2D, l.TEXTURE_MAX_ANISOTROPY_EXT, 16),
-            gl.texParameteri(
-              gl.TEXTURE_2D,
-              gl.TEXTURE_MIN_FILTER,
-              gl.LINEAR_MIPMAP_LINEAR
+            this.gl.texParameterf(this.gl.TEXTURE_2D, l.TEXTURE_MAX_ANISOTROPY_EXT, 16),
+            this.gl.texParameteri(
+              this.gl.TEXTURE_2D,
+              this.gl.TEXTURE_MIN_FILTER,
+              this.gl.LINEAR_MIPMAP_LINEAR
             ),
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR),
-            gl.generateMipmap(gl.TEXTURE_2D),
-            gl.bindTexture(gl.TEXTURE_2D, null);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR),
+            this.gl.generateMipmap(this.gl.TEXTURE_2D),
+            this.gl.bindTexture(this.gl.TEXTURE_2D, null);
         }
       }
     }
     return this.texLevels;
   }
   getFrameBuffer() {
-    return 0 == this.fbo && (this.fbo = gl.createFramebuffer()), this.fbo;
+    return 0 == this.fbo && (this.fbo = this.gl.createFramebuffer()), this.fbo;
   }
   setupLegacyShaderProg() {
-    opengl.uMatrixMode(opengl.U_PROJECTION),
-      opengl.uLoadIdentity(),
-      opengl.uMatrixMode(opengl.U_MODELVIEW),
-      opengl.uLoadIdentity(),
-      opengl.uScalef(1, 1, 0.01),
-      opengl.uScalef(2, 2, 1),
-      opengl.uTranslatef(-0.5, -0.5, 0);
+    this.opengl.uMatrixMode(this.opengl.U_PROJECTION),
+      this.opengl.uLoadIdentity(),
+      this.opengl.uMatrixMode(this.opengl.U_MODELVIEW),
+      this.opengl.uLoadIdentity(),
+      this.opengl.uScalef(1, 1, 0.01),
+      this.opengl.uScalef(2, 2, 1),
+      this.opengl.uTranslatef(-0.5, -0.5, 0);
   }
   ignite(t) {
     this.config.setTime(t)
     this.setupLegacyShaderProg();
     var e = new FrameMgr(0, null),
       t = this.getFrameBuffer();
-    gl.bindFramebuffer(gl.FRAMEBUFFER, t);
+    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, t);
     var r = this.getTextureLevels();
-    gl.blendFunc(gl.ONE, gl.ONE), gl.enable(gl.BLEND), gl.disable(gl.CULL_FACE);
+    this.gl.blendFunc(this.gl.ONE, this.gl.ONE), this.gl.enable(this.gl.BLEND), this.gl.disable(this.gl.CULL_FACE);
     var a,
       o = this.config.getFirstLevel(),
       i = this.config.getLastLevel();
@@ -1162,10 +1116,9 @@ class Furnace {
       for (n = 0; n < l; n++)
         this.drawMapLevel(this.config.getFlameTransforms(), e, a, n);
     }
-    return gl.bindFramebuffer(gl.FRAMEBUFFER, null), e.getSource();
+    return this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null), e.getSource();
   }
 }
-var gl;
 function getPostprocessShaderCode() {
   const vert = `precision highp float;
   varying vec3 worldCoords;
@@ -1198,7 +1151,8 @@ function getPostprocessShaderCode() {
   return { vert, frag };
 }
 class Engine {
-  constructor() {
+  constructor(canvas) {
+    this.canvas = canvas;
     (this.sizeX = window.innerWidth),
       (this.sizeY = window.innerHeight),
       this.furnace,
@@ -1210,9 +1164,9 @@ class Engine {
       (this.oldval = 0);
   }
   init() {
-    (window.gl = this.initGl(document.getElementById("canvas"), null)),
-      (window.opengl = new OpenGL()),
-      (this.furnace = new Furnace(gl));
+    (this.gl = this.initGl(this.canvas, null)),
+      (this.opengl = new OpenGL(this.gl)),
+      (this.furnace = new Furnace(this.gl, this.opengl));
   }
   initGl(e, t) {
     var r;
@@ -1241,20 +1195,20 @@ class Engine {
     const shader = getPostprocessShaderCode()
     return (
       "undefined" == typeof this.postprocessProg &&
-        ((this.postprocessProg = opengl.makeProgramObject(shader["vert"], shader["frag"])),
-        (this.postprocessProg.uScale = gl.getUniformLocation(
+        ((this.postprocessProg = this.opengl.makeProgramObject(shader["vert"], shader["frag"])),
+        (this.postprocessProg.uScale = this.gl.getUniformLocation(
           this.postprocessProg,
           "uScale"
         )),
-        (this.postprocessProg.uMove = gl.getUniformLocation(
+        (this.postprocessProg.uMove = this.gl.getUniformLocation(
           this.postprocessProg,
           "uMove"
         )),
-        (this.postprocessProg.uColormode = gl.getUniformLocation(
+        (this.postprocessProg.uColormode = this.gl.getUniformLocation(
           this.postprocessProg,
           "uColormode"
         )),
-        (this.postprocessProg.uTexture = gl.getUniformLocation(
+        (this.postprocessProg.uTexture = this.gl.getUniformLocation(
           this.postprocessProg,
           "uTexture"
         ))
@@ -1264,26 +1218,37 @@ class Engine {
   }
   drawScene(w, h, t) {
     var a = this.furnace.ignite(t);
-    gl.bindTexture(gl.TEXTURE_2D, a),
-      gl.viewport(0, 0, w, h),
-      gl.enable(gl.DEPTH_TEST),
-      gl.disable(gl.BLEND),
-      gl.clearColor(0.3, 0.5, 0.7, 0),
-      gl.clear(gl.COLOR_BUFFER_BIT + gl.DEPTH_BUFFER_BIT),
-      gl.enable(gl.DEPTH_TEST);
+    this.gl.bindTexture(this.gl.TEXTURE_2D, a),
+      this.gl.viewport(0, 0, w, h),
+      this.gl.enable(this.gl.DEPTH_TEST),
+      this.gl.disable(this.gl.BLEND),
+      this.gl.clearColor(0.3, 0.5, 0.7, 0),
+      this.gl.clear(this.gl.COLOR_BUFFER_BIT + this.gl.DEPTH_BUFFER_BIT),
+      this.gl.enable(this.gl.DEPTH_TEST);
     var o = this.getPostprocessShader();
-    gl.useProgram(o);
+    this.gl.useProgram(o);
     var i = this.furnace.getConfig().getView();
-    gl.activeTexture(gl.TEXTURE0),
-      gl.uniform1i(o.uTexture, 0),
-      gl.uniform2f(o.uScale, i[0], i[1]),
-      gl.uniform2f(o.uMove, i[2], i[3]),
-      gl.uniform1f(
+    this.gl.activeTexture(this.gl.TEXTURE0),
+      this.gl.uniform1i(o.uTexture, 0),
+      this.gl.uniform2f(o.uScale, i[0], i[1]),
+      this.gl.uniform2f(o.uMove, i[2], i[3]),
+      this.gl.uniform1f(
         o.uColormode,
         0 > this.furnace.getConfig().getMapExposure() ? 0 : 1
       )
     var n = 1;
-    opengl.draw_texture(o, mat4.create(), [-1, -1, 0.5], [1, 1, 0.5]),
-      gl.useProgram(null);
+    this.opengl.draw_texture(o, mat4.create(), [-1, -1, 0.5], [1, 1, 0.5]),
+      this.gl.useProgram(null);
   }
+}
+
+export {
+  Engine,
+  Furnace,
+  OpenGL,
+  variation_list,
+  Variation,
+  VariationInverse,
+  FlameConfig,
+  FlameTransform,
 }

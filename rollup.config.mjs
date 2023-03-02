@@ -2,10 +2,11 @@ import {nodeResolve} from "@rollup/plugin-node-resolve"
 import serve from "rollup-plugin-serve";
 
 export default {
-  input: "./bl4st.js",
+  input: "./main.js",
+  treeshake: false,
   output: {
     file: "./bundle.js",
-    format: "iife"
+    format: "esm"
   },
   plugins: [
     nodeResolve(),
