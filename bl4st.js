@@ -54,44 +54,23 @@ function evalCode(code, view) {
 
 const params = new URLSearchParams(location.search);
 let defaultCode = `flame()
+  .screenInitScale(.2)
+  .screenInitVal(.8)
+  .colorful(0.4)
+  .mapExposure(1.6)
   .addTransform(
     transform()
-    .linear()
-    .weight(0.35)
-    .wvar(0.7)
-    .x(({time}) => [Math.sin(time)+1, Math.cos(time)+1])
-    .y([-0.1303464, 0.361507])
-    .o([0.625, 0])
+    .fisheye()
+    .x(({time}) => [.2,1.5*Math.sin(time/5)])
     .build()
   )
   .addTransform(
     transform()
-    .linear()
-    .weight(0.35)
-    .wvar(1)
-    .x([0.5003027, 0.8662202])
-    .y([-0.8662202, 0.5003027])
+    .fisheye()
+    .y(({time}) => [.2,1.5*Math.cos(time/3)])
     .build()
   )
-  .addTransform(
-    transform()
-    .linear()
-    .weight(0.85)
-    .wvar(0.9)
-    .x([0.08563109, 0.7551379])
-    .y([-0.7551379, 0.08563109])
-    .build()
-  )
-  .mapExposure(2.4)
-  .colorful(0.8323)
-  .texScale(1)
-  .firstLevel(7)
-  .lastLevel(10)
-  .screenInitVal(2.4)
-  .screenInitScale(0.09)
-  .iterations(3)
-  .view([.8, .8, 0, 0])
-`
+  .view([1.1,1.1,0,0])`
 if (params.get("c")) {
   defaultCode = params.get("c");
 }
