@@ -63,6 +63,10 @@
         <div id="editor"></div>
         <button id="runButton">▶️</button>
     </body>
-    <!--<script src="https://npmcdn.com/regl/dist/regl.js"></script>-->
-    <script type="module" src="bundle.js"></script>
+    <script>
+        (async () => {
+            const { setup } = await import("./bundle.js");
+            setup();
+        })()
+    </script>
 </html
