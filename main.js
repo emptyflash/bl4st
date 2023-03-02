@@ -20,7 +20,7 @@ import { linter } from "@codemirror/lint";
 import { flame, transform } from "./bl4st.mjs"
 import { Engine } from "./ablaze.mjs"
 
-export function setup() {
+function setup() {
   const engine = new Engine(document.getElementById("canvas"))
   engine.init()
 
@@ -153,4 +153,11 @@ export function setup() {
   Vim.defineEx('write', 'w', function() {
     evalCode(editor.state.doc.toString(), editor);
   });
+}
+
+export {
+  flame,
+  transform,
+  Engine,
+  setup,
 }

@@ -43446,4 +43446,4 @@ function setup() {
   });
 }
 
-export { setup };
+export { Engine, flame, setup, transform };
