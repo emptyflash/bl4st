@@ -55,6 +55,9 @@ export class TransformBuilder {
   }
 
   _rotate(prop, angle, speed, radius) {
+    angle = angle || .1
+    speed = speed || .1
+    radius = radius || .5
     this[prop] = function ({time}) {
       let amount = handleLookup(this, angle) + handleLookup(this, speed) * time
       return vec2.rotate(

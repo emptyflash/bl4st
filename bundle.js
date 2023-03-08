@@ -43192,16 +43192,20 @@ class Engine {
     return this.currentConfig
   }
   render() {
+    if (!this.startTime) {
+      this.startTime = performance.now();
+    }
+    const time = (performance.now() - this.startTime) / 1000;
+    this.drawScene(window.innerWidth, window.innerHeight, time);
+    if (this.update instanceof Function) {
+      this.update(time);
+    }
+    window.requestAnimationFrame(this.render.bind(this));
+  }
+  start() {
     if (!this.rendering) {
-      if (!this.startTime) {
-        this.startTime = performance.now();
-      }
-      const time = (performance.now() - this.startTime) / 1000;
-      this.drawScene(window.innerWidth, window.innerHeight, time);
-      if (this.update instanceof Function) {
-        this.update(time);
-      }
-      window.requestAnimationFrame(this.render.bind(this));
+      this.render();
+      this.rendering = true;
     }
   }
   getPostprocessShader() {
@@ -43255,8 +43259,6 @@ class Engine {
   }
 }
 
-"use strict";
-
 class TransformBuilder {
   constructor() {
     this._name = "linear";
@@ -43306,6 +43308,9 @@ class TransformBuilder {
   }
 
   _rotate(prop, angle, speed, radius) {
+    angle = angle || .1;
+    speed = speed || .1;
+    radius = radius || .5;
     this[prop] = function ({time}) {
       let amount = handleLookup(this, angle) + handleLookup(this, speed) * time;
       return rotate(

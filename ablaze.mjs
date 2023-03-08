@@ -1196,6 +1196,12 @@ class Engine {
     }
     window.requestAnimationFrame(this.render.bind(this));
   }
+  start() {
+    if (!this.rendering) {
+      this.render()
+      this.rendering = true;
+    }
+  }
   getPostprocessShader() {
     const shader = getPostprocessShaderCode()
     return (
