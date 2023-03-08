@@ -7889,7 +7889,7 @@ function expandString(e, t) {
 function handleLookup(self, val) {
   if (val instanceof Function) {
     const context = self.getContext();
-    return val(context)
+    return val.call(self, context)
   }
   return val
 }
@@ -8114,6 +8114,7 @@ class FlameTransform extends Variation {
       time: this._time,
     }
   }
+
   equals(e) {
     return "undefined" != typeof e && this._var == e._var;
   }
@@ -8813,8 +8814,9 @@ function getPostprocessShaderCode() {
   return { vert, frag };
 }
 class Engine {
-  constructor(canvas) {
+  constructor(canvas, update) {
     this.canvas = canvas;
+    this.update = update;
     (this.sizeX = window.innerWidth),
       (this.sizeY = window.innerHeight),
       this.furnace,
@@ -8846,12 +8848,17 @@ class Engine {
     return this.currentConfig
   }
   render() {
-    if (!this.startTime) {
-      this.startTime = performance.now();
+    if (!this.rendering) {
+      if (!this.startTime) {
+        this.startTime = performance.now();
+      }
+      const time = (performance.now() - this.startTime) / 1000;
+      this.drawScene(window.innerWidth, window.innerHeight, time);
+      if (this.update instanceof Function) {
+        this.update(time);
+      }
+      window.requestAnimationFrame(this.render.bind(this));
     }
-    const time = (performance.now() - this.startTime) / 1000;
-    this.drawScene(window.innerWidth, window.innerHeight, time);
-    window.requestAnimationFrame(this.render.bind(this));
   }
   getPostprocessShader() {
     const shader = getPostprocessShaderCode();
@@ -8904,6 +8911,8 @@ class Engine {
   }
 }
 
+"use strict";
+
 class TransformBuilder {
   constructor() {
     this._name = "linear";
@@ -8950,6 +8959,31 @@ class TransformBuilder {
   o(v) {
     this._o = v;
     return this
+  }
+
+  _rotate(prop, angle, speed, radius) {
+    this[prop] = function ({time}) {
+      let amount = handleLookup(this, angle) + handleLookup(this, speed) * time;
+      return rotate(
+        create(),
+        [handleLookup(this, radius), 0],
+        create(),
+        amount
+      )
+    };
+    return this
+  }
+
+  rotateX(angle, speed, radius) {
+    return this._rotate("_x", angle, speed, radius)
+  }
+
+  rotateY(angle, speed, radius) {
+    return this._rotate("_y", angle, speed, radius)
+  }
+
+  rotateO(angle, speed, radius) {
+    return this._rotate("_o", angle, speed, radius)
   }
 
   build() {

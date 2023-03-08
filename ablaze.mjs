@@ -227,7 +227,7 @@ function expandString(e, t) {
 function handleLookup(self, val) {
   if (val instanceof Function) {
     const context = self.getContext()
-    return val(context)
+    return val.call(self, context)
   }
   return val
 }
@@ -452,6 +452,7 @@ class FlameTransform extends Variation {
       time: this._time,
     }
   }
+
   equals(e) {
     return "undefined" != typeof e && this._var == e._var;
   }
@@ -1151,8 +1152,9 @@ function getPostprocessShaderCode() {
   return { vert, frag };
 }
 class Engine {
-  constructor(canvas) {
+  constructor(canvas, update) {
     this.canvas = canvas;
+    this.update = update;
     (this.sizeX = window.innerWidth),
       (this.sizeY = window.innerHeight),
       this.furnace,
@@ -1189,6 +1191,9 @@ class Engine {
     }
     const time = (performance.now() - this.startTime) / 1000
     this.drawScene(window.innerWidth, window.innerHeight, time)
+    if (this.update instanceof Function) {
+      this.update(time)
+    }
     window.requestAnimationFrame(this.render.bind(this));
   }
   getPostprocessShader() {
@@ -1251,4 +1256,5 @@ export {
   VariationInverse,
   FlameConfig,
   FlameTransform,
+  handleLookup,
 }

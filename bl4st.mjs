@@ -2,7 +2,9 @@ import {
   FlameConfig,
   FlameTransform,
   variation_list,
+  handleLookup,
 } from "./ablaze.mjs"
+import { vec2 } from "gl-matrix";
 
 export class TransformBuilder {
   constructor() {
@@ -50,6 +52,31 @@ export class TransformBuilder {
   o(v) {
     this._o = v
     return this
+  }
+
+  _rotate(prop, angle, speed, radius) {
+    this[prop] = function ({time}) {
+      let amount = handleLookup(this, angle) + handleLookup(this, speed) * time
+      return vec2.rotate(
+        vec2.create(),
+        [handleLookup(this, radius), 0],
+        vec2.create(),
+        amount
+      )
+    }
+    return this
+  }
+
+  rotateX(angle, speed, radius) {
+    return this._rotate("_x", angle, speed, radius)
+  }
+
+  rotateY(angle, speed, radius) {
+    return this._rotate("_y", angle, speed, radius)
+  }
+
+  rotateO(angle, speed, radius) {
+    return this._rotate("_o", angle, speed, radius)
   }
 
   build() {
