@@ -20,5 +20,6 @@ export default [{
   },
   plugins: [
     nodeResolve(),
+    serve('.')
   ],
 }]

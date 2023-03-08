@@ -8211,17 +8211,17 @@ class FlameConfig {
   constructor() {
     (this.xf = []),
       (this.map_exposure = 1.8),
-      (this._colorful = 1.5),
+      (this._colorful = 1),
       (this.texscale = 0.8),
       (this.force_vertexonly = 0),
       (this.disc_compute = 50),
       (this.firstlevel = 6),
       (this.lastlevel = 12),
       (this.nlevel = 12),
-      (this.screen_initval = 0.3),
+      (this.screen_initval = 0.8),
       (this.screen_initscale = 0.2),
       (this._iterations = 3),
-      (this._view = [5, 5, 0, 0]);
+      (this._view = [1, 1, 0, 0]);
   }
   addTransform(t) {
     this.xf.push(t);
