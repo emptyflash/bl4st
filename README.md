@@ -24,9 +24,9 @@ flame()
     .exposure(3)
 ```
 
-Flames are essentially a set of transforms applied recursively to some initial state. These
+Flames are essentially a set of transforms applied recursively to an initial state. These
 transforms apply some affine transformation on the coordinate system using the `x`, `y`, and `o`
-vector properties and a `wvar` scalar. The result of this affine transformation is then feed into
+vector properties and a `wvar` scalar. The result of this affine transformation is fed into
 the a function based on the `variation`, which further alters the coordinate system.
 
 For example, if you wanted to add a linear (just the affine part) transform to a flame you could do:
@@ -69,7 +69,7 @@ flame()
   )
 ```
 
-Check out the full list of [supported variations](#Variations)
+Check out the full list of [supported variations](README.md#Variations)
 
 Transforms can also be animated over time by providing any of the properties a function:
 ```
