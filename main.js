@@ -56,24 +56,23 @@ function setup() {
   }
 
   const params = new URLSearchParams(location.search);
-  let defaultCode = `flame()
-    .screenInitScale(.2)
-    .screenInitVal(.8)
-    .colorful(0.4)
-    .mapExposure(1.6)
-    .addTransform(
-      transform()
-      .fisheye()
-      .x(({time}) => [.2,1.5*Math.sin(time/5)])
-      .build()
-    )
-    .addTransform(
-      transform()
-      .fisheye()
-      .y(({time}) => [.2,1.5*Math.cos(time/3)])
-      .build()
-    )
-    .view([1.1,1.1,0,0])`
+  let defaultCode = `
+// More info at https://github.com/emptyflash/bl4st
+flame()
+  .initScale(.2)
+  .initVal(.8)
+  .colorful(0.4)
+  .exposure(1.6)
+  .addTransform(
+    transform()
+    .fisheye()
+    .x(({time}) => [.2,1.5*Math.sin(time/5)])
+  )
+  .addTransform(
+    transform()
+    .fisheye()
+    .y(({time}) => [.2,1.5*Math.cos(time/3)])
+  )`
   if (params.get("c")) {
     defaultCode = params.get("c");
   }
