@@ -8223,10 +8223,6 @@ class FlameConfig {
       (this._iterations = 3),
       (this._view = [1, 1, 0, 0]);
   }
-  addTransform(t) {
-    this.xf.push(t);
-    return this
-  }
   getMapExposure() {
     return this.map_exposure;
   }
@@ -8996,12 +8992,38 @@ class TransformBuilder {
   }
 }
 
+class NewFlameConfig extends FlameConfig {
+  addTransform(t) {
+    let transform = t;
+    if (transform instanceof TransformBuilder) {
+      transform = transform.build();
+    }
+    this.xf.push(transform);
+    return this
+  }
+
+  initVal(v) {
+    this.screen_initval = v;
+    return this
+  }
+
+  initScale(s) {
+    this.screen_initscale = s;
+    return this
+  }
+
+  exposure(e) {
+    this.map_exposure = e;
+    return this;
+  }
+}
+
 function transform() {
   return new TransformBuilder()
 }
 
 function flame() {
-  return new FlameConfig()
+  return new NewFlameConfig()
 }
 
 if (!window.flameEngine) {

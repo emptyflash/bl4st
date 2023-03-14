@@ -561,10 +561,6 @@ class FlameConfig {
       (this._iterations = 3),
       (this._view = [1, 1, 0, 0])
   }
-  addTransform(t) {
-    this.xf.push(t);
-    return this
-  }
   getMapExposure() {
     return this.map_exposure;
   }
